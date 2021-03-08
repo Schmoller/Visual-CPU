@@ -1,6 +1,8 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { VisualNode } from '../components/VisualNode'
 import { Node } from '../lib/node'
+import { Port } from '../lib/port'
+import { TestNode } from '../lib/nodes/test'
 
 import './style.css'
 
@@ -14,6 +16,7 @@ export interface CanvasProps {
 export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [nodes, setNodes] = useState<Node[]>([])
     const [draggedNode, setDraggedNode] = useState<Node | null>(null)
+    const [draggedPort, setDraggedPort] = useState<[Port, Node] | null>(null)
     const dragOffset = useRef({ x: 0, y: 0 })
     const panOffset = useRef({ x: 0, y: 0 })
     const cursorPanOffset = useRef({ x: 0, y: 0 })
@@ -21,8 +24,8 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [panMode, setPanMode] = useState(false)
     const [, setForcedUpdate] = useState<number>(0)
     const [zoom, setZoom] = useState(1)
-    const [panX, setPanX] = useState(100)
-    const [panY, setPanY] = useState(100)
+    const [panX, setPanX] = useState(0)
+    const [panY, setPanY] = useState(0)
 
     const doCanvasMouseDown = (event: React.MouseEvent) => {
         if (event.button === 1) {
@@ -31,14 +34,17 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             panOffset.current.y = panY
             cursorPanOffset.current.x = event.clientX / zoom
             cursorPanOffset.current.y = event.clientY / zoom
-
-            console.log('Start', panOffset.current, cursorPanOffset.current)
         }
     }
 
     const doCanvasMouseUp = (event: React.MouseEvent) => {
-        if (event.button === 0 && draggedNode) {
-            setDraggedNode(null)
+        if (event.button === 0) {
+            if (draggedNode) {
+                setDraggedNode(null)
+            }
+            if (draggedPort) {
+                setDraggedPort(null)
+            }
         } else if (event.button === 1) {
             setPanMode(false)
         }
@@ -73,7 +79,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 x = Math.round(x / gridSnap) * gridSnap
                 y = Math.round(y / gridSnap) * gridSnap
 
-                const node = new Node(x, y, 50, 50)
+                const node = new TestNode(x, y)
                 setNodes([...nodes, node])
             }
         }
@@ -96,6 +102,21 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
 
     const onNodeMouseUp = (node: Node, event: React.PointerEvent) => {
         // Noop
+    }
+
+    const onPortLinkStart = (node: Node, port: Port) => {
+        setDraggedPort([port, node])
+        console.log('Port Link start: ', port.name, ' from ', node)
+    }
+
+    const onPortMouseUp = (node: Node, port: Port, event: React.PointerEvent) => {
+        if (draggedPort) {
+            const [srcPort, srcNode] = draggedPort
+            srcPort.linked = [node, port]
+            port.linked = [srcNode, srcPort]
+            console.log('Port Link end: ', port.name, ' from ', node)
+            setDraggedPort(null)
+        }
     }
 
     const doWheel = (event: React.WheelEvent) => {
@@ -132,6 +153,8 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                             allowEdit={editMode}
                             onMouseDown={onNodeMouseDown}
                             onMouseUp={onNodeMouseUp}
+                            onLinkStart={onPortLinkStart}
+                            onPortMouseUp={onPortMouseUp}
                         />
                     ))}
                 </g>
