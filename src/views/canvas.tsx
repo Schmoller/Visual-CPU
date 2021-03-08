@@ -15,24 +15,47 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [nodes, setNodes] = useState<Node[]>([])
     const [draggedNode, setDraggedNode] = useState<Node | null>(null)
     const dragOffset = useRef({ x: 0, y: 0 })
+    const panOffset = useRef({ x: 0, y: 0 })
+    const cursorPanOffset = useRef({ x: 0, y: 0 })
     const [editMode, setEditMode] = useState(true)
+    const [panMode, setPanMode] = useState(false)
     const [, setForcedUpdate] = useState<number>(0)
+    const [zoom, setZoom] = useState(1)
+    const [panX, setPanX] = useState(100)
+    const [panY, setPanY] = useState(100)
 
-    const doCanvasMouseDown = (event: React.MouseEvent) => {}
+    const doCanvasMouseDown = (event: React.MouseEvent) => {
+        if (event.button === 1) {
+            setPanMode(true)
+            panOffset.current.x = panX
+            panOffset.current.y = panY
+            cursorPanOffset.current.x = event.clientX / zoom
+            cursorPanOffset.current.y = event.clientY / zoom
+
+            console.log('Start', panOffset.current, cursorPanOffset.current)
+        }
+    }
 
     const doCanvasMouseUp = (event: React.MouseEvent) => {
-        setDraggedNode(null)
+        if (event.button === 0 && draggedNode) {
+            setDraggedNode(null)
+        } else if (event.button === 1) {
+            setPanMode(false)
+        }
     }
 
     const doCanvasMouseDrag = (event: React.MouseEvent) => {
         if (draggedNode) {
-            draggedNode.x = event.clientX + dragOffset.current.x
-            draggedNode.y = event.clientY + dragOffset.current.y
+            draggedNode.x = event.clientX / zoom + dragOffset.current.x
+            draggedNode.y = event.clientY / zoom + dragOffset.current.y
 
             draggedNode.x = Math.round(draggedNode.x / gridSnap) * gridSnap
             draggedNode.y = Math.round(draggedNode.y / gridSnap) * gridSnap
 
             setForcedUpdate(num => num + 1)
+        } else if (panMode) {
+            setPanX(event.clientX / zoom - cursorPanOffset.current.x + panOffset.current.x)
+            setPanY(event.clientY / zoom - cursorPanOffset.current.y + panOffset.current.y)
         }
 
         currentMouseX = event.clientX
@@ -44,7 +67,13 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     useEffect(() => {
         const onGlobalKeyUp = (event: KeyboardEvent) => {
             if (event.key == 'a') {
-                const node = new Node(currentMouseX, currentMouseY, 50, 50)
+                let x = currentMouseX / zoom - panX
+                let y = currentMouseY / zoom - panY
+
+                x = Math.round(x / gridSnap) * gridSnap
+                y = Math.round(y / gridSnap) * gridSnap
+
+                const node = new Node(x, y, 50, 50)
                 setNodes([...nodes, node])
             }
         }
@@ -57,16 +86,20 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     })
 
     const onNodeMouseDown = (node: Node, event: React.PointerEvent) => {
-        if (editMode) {
+        if (editMode && event.button == 0) {
             setDraggedNode(node)
 
-            dragOffset.current.x = node.x - event.clientX
-            dragOffset.current.y = node.y - event.clientY
+            dragOffset.current.x = node.x - event.clientX / zoom
+            dragOffset.current.y = node.y - event.clientY / zoom
         }
     }
 
     const onNodeMouseUp = (node: Node, event: React.PointerEvent) => {
         // Noop
+    }
+
+    const doWheel = (event: React.WheelEvent) => {
+        setZoom(zoom - event.deltaY * 0.01)
     }
 
     return (
@@ -76,6 +109,10 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             onMouseUp={doCanvasMouseUp}
             onMouseMove={doCanvasMouseDrag}
             onKeyUp={doKeyUp}
+            onWheel={doWheel}
+            style={{
+                cursor: panMode || draggedNode ? 'grabbing' : 'inherit',
+            }}
         >
             <svg
                 style={{
@@ -87,7 +124,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                     position: 'absolute',
                 }}
             >
-                <g>
+                <g transform={`scale(${zoom} ${zoom}) translate(${panX} ${panY})`}>
                     {nodes.map((node, index) => (
                         <VisualNode
                             key={index}
