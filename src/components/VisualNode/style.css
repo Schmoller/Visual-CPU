@@ -1,0 +1,6 @@
+.node-body {
+    position: absolute;
+    background-color: #ffffff;
+    border: 1px solid black;
+    border-radius: 4px;
+}
