@@ -23,11 +23,11 @@ export class Node {
 
         switch (port.side) {
             case 'top':
-                x = this.x + PortSpacing + port.slot * (PortSize + PortSpacing)
+                x = this.x + PortSize + PortSpacing + port.slot * (PortSize + PortSpacing)
                 y = this.y - PortSize / 2
                 break
             case 'bottom':
-                x = this.x + PortSpacing + port.slot * (PortSize + PortSpacing)
+                x = this.x + PortSize + PortSpacing + port.slot * (PortSize + PortSpacing)
                 y = this.y + this.height - PortSize / 2
                 break
 

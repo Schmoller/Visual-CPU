@@ -12,6 +12,22 @@ export class TestNode extends Node {
             slot: 0,
             side: 'left',
         })
+        this.ports.push({
+            type: 'input',
+            link: null,
+            reverseLink: null,
+            name: 'In 2',
+            slot: 1,
+            side: 'left',
+        })
+        this.ports.push({
+            type: 'input',
+            link: null,
+            reverseLink: null,
+            name: 'In 3',
+            slot: 2,
+            side: 'left',
+        })
 
         this.ports.push({
             type: 'output',
@@ -20,6 +36,30 @@ export class TestNode extends Node {
             name: 'Out 1',
             slot: 0,
             side: 'right',
+        })
+        this.ports.push({
+            type: 'output',
+            link: null,
+            reverseLink: null,
+            name: 'Out 2',
+            slot: 1,
+            side: 'right',
+        })
+        this.ports.push({
+            type: 'bidi',
+            link: null,
+            reverseLink: null,
+            name: 'BiDi 1',
+            slot: 0,
+            side: 'top',
+        })
+        this.ports.push({
+            type: 'bidi',
+            link: null,
+            reverseLink: null,
+            name: 'BiDi 2',
+            slot: 0,
+            side: 'bottom',
         })
     }
 }
