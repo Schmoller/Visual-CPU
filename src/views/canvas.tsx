@@ -111,8 +111,9 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const onPortMouseUp = (node: Node, port: Port, event: React.PointerEvent) => {
         if (draggedPort) {
             const [srcPort, srcNode] = draggedPort
-            srcPort.linkedTo = [node, port]
-            port.linkedFrom = [srcNode, srcPort]
+            if (!port.linkFrom(srcNode, srcPort)) {
+                srcPort.linkFrom(node, port)
+            }
             setDraggedPort(null)
         }
     }

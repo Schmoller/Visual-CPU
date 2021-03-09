@@ -59,8 +59,8 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
             >
                 {port.glyph()}
             </text>
-            {port.linkedTo && (
-                <Link srcNode={node} srcPort={port} dstNode={port.linkedTo[0]} dstPort={port.linkedTo[1]} />
+            {port.linkedFrom && (
+                <Link dstNode={node} dstPort={port} srcNode={port.linkedFrom[0]} srcPort={port.linkedFrom[1]} />
             )}
             {showDescription && <PortDescription port={port} ox={x} oy={y} />}
         </g>

@@ -8,10 +8,18 @@ export enum Side {
 }
 
 export abstract class Port {
-    linkedTo: [Node, Port] | null = null
     linkedFrom: [Node, Port] | null = null
 
     constructor(public name: string, public side: Side, public slot: number) {}
+
+    linkFrom(node: Node, port: Port): boolean {
+        if (this.canConnectInbound(port)) {
+            this.linkedFrom = [node, port]
+            return true
+        }
+
+        return false
+    }
 
     // Temporary
     abstract glyph(): string
@@ -41,13 +49,6 @@ export class OutputPort extends Port {
     }
 
     canConnectInbound(source: Port): boolean {
-        if (source instanceof InputPort) {
-            return true
-        }
-        if (source instanceof BiDiPort) {
-            return true
-        }
-
         return false
     }
 }
