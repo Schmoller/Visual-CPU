@@ -1,4 +1,4 @@
-import { Port } from './port'
+import { Port, Side } from './port'
 
 export const PortSize = 15
 export const PortSpacing = 5
@@ -22,20 +22,20 @@ export class Node {
         let y: number
 
         switch (port.side) {
-            case 'top':
+            case Side.Top:
                 x = this.x + PortSize + PortSpacing + port.slot * (PortSize + PortSpacing)
                 y = this.y - PortSize / 2
                 break
-            case 'bottom':
+            case Side.Bottom:
                 x = this.x + PortSize + PortSpacing + port.slot * (PortSize + PortSpacing)
                 y = this.y + this.height - PortSize / 2
                 break
 
-            case 'left':
+            case Side.Left:
                 y = this.y + PortSpacing + port.slot * (PortSize + PortSpacing)
                 x = this.x - PortSize / 2
                 break
-            case 'right':
+            case Side.Right:
                 y = this.y + PortSpacing + port.slot * (PortSize + PortSpacing)
                 x = this.x + this.width - PortSize / 2
                 break

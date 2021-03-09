@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react'
 import { Node } from '../../lib/node'
-import { Port } from '../../lib/port'
+import { Port, Side } from '../../lib/port'
 import { Link } from './Link'
 
 const PortSize = 15
@@ -36,21 +36,6 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
 
     const [x, y] = node.getPortLocation(port)
 
-    let glyph: string
-    switch (port.type) {
-        case 'input':
-            glyph = 'I'
-            break
-        case 'output':
-            glyph = 'O'
-            break
-        case 'bidi':
-            glyph = 'X'
-            break
-        default:
-            glyph = '?'
-    }
-
     return (
         <g>
             <rect
@@ -72,9 +57,11 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
                 dominantBaseline='central'
                 pointerEvents='none'
             >
-                {glyph}
+                {port.glyph()}
             </text>
-            {port.link && <Link srcNode={node} srcPort={port} dstNode={port.link[0]} dstPort={port.link[1]} />}
+            {port.linkedTo && (
+                <Link srcNode={node} srcPort={port} dstNode={port.linkedTo[0]} dstPort={port.linkedTo[1]} />
+            )}
             {showDescription && <PortDescription port={port} ox={x} oy={y} />}
         </g>
     )
@@ -90,25 +77,25 @@ const PortDescription: FC<PortDescriptionProps> = ({ port, ox, oy }) => {
     let hAlign: string
     let vAlign: string
     switch (port.side) {
-        case 'top':
+        case Side.Top:
             hAlign = 'middle'
             ox += PortSize / 2
             oy -= PortSpacing
             vAlign = 'auto'
             break
-        case 'bottom':
+        case Side.Bottom:
             hAlign = 'middle'
             ox += PortSize / 2
             oy += PortSize + PortSpacing
             vAlign = 'hanging'
             break
-        case 'left':
+        case Side.Left:
             hAlign = 'end'
             ox -= PortSpacing
             oy += PortSize / 2
             vAlign = 'central'
             break
-        case 'right':
+        case Side.Right:
             hAlign = 'start'
             ox += PortSize + PortSpacing
             oy += PortSize / 2
