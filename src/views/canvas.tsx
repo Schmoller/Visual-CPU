@@ -106,15 +106,13 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
 
     const onPortLinkStart = (node: Node, port: Port) => {
         setDraggedPort([port, node])
-        console.log('Port Link start: ', port.name, ' from ', node)
     }
 
     const onPortMouseUp = (node: Node, port: Port, event: React.PointerEvent) => {
         if (draggedPort) {
             const [srcPort, srcNode] = draggedPort
-            srcPort.linked = [node, port]
-            port.linked = [srcNode, srcPort]
-            console.log('Port Link end: ', port.name, ' from ', node)
+            srcPort.link = [node, port]
+            port.reverseLink = [srcNode, srcPort]
             setDraggedPort(null)
         }
     }

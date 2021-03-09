@@ -6,18 +6,20 @@ export class TestNode extends Node {
 
         this.ports.push({
             type: 'input',
-            linked: null,
+            link: null,
+            reverseLink: null,
             name: 'In 1',
-            relX: -5,
-            relY: 10,
+            slot: 0,
+            side: 'left',
         })
 
         this.ports.push({
             type: 'output',
-            linked: null,
+            link: null,
+            reverseLink: null,
             name: 'Out 1',
-            relX: 120,
-            relY: 10,
+            slot: 0,
+            side: 'right',
         })
     }
 }

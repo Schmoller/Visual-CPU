@@ -3,9 +3,10 @@ import { Node } from './node'
 export interface Port {
     name: string
     type: string
-    linked: [Node, Port] | null
-    relX: number
-    relY: number
+    link: [Node, Port] | null
+    reverseLink: [Node, Port] | null
+    side: 'top' | 'bottom' | 'left' | 'right'
+    slot: number
 }
 
 export interface InputPort extends Port {

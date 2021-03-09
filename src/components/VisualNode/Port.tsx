@@ -1,6 +1,10 @@
 import React, { FC } from 'react'
 import { Node } from '../../lib/node'
 import { Port } from '../../lib/port'
+import { Link } from './Link'
+
+const PortSize = 15
+const PortSpacing = 5
 
 export interface PortProps {
     node: Node
@@ -20,27 +24,21 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
         onMouseUp?.(node, port, event)
     }
 
+    const [x, y] = node.getPortLocation(port)
+
     return (
         <g>
             <rect
                 stroke='#000000'
                 fill='#ffffff'
-                x={node.x + port.relX}
-                y={node.y + port.relY}
-                width={15}
-                height={15}
+                x={x}
+                y={y}
+                width={PortSize}
+                height={PortSize}
                 onPointerDown={onPointerDown}
                 onPointerUp={onPointerUp}
             />
-            {port.linked && (
-                <line
-                    x1={node.x + port.relX + 7.5}
-                    y1={node.y + port.relY + 7.5}
-                    x2={port.linked[0].x + port.linked[1].relX + 7.5}
-                    y2={port.linked[0].y + port.linked[1].relY + 7.5}
-                    stroke='#000000'
-                />
-            )}
+            {port.link && <Link srcNode={node} srcPort={port} dstNode={port.link[0]} dstPort={port.link[1]} />}
         </g>
     )
 }
