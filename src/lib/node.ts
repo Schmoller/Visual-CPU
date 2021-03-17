@@ -1,3 +1,4 @@
+import { Point } from './common'
 import { Port, Side } from './port'
 
 export const PortSize = 15
@@ -17,7 +18,7 @@ export class Node {
         this.ports = []
     }
 
-    getPortLocation(port: Port): [number, number] {
+    getPortLocation(port: Port, center = false): Point {
         let x: number
         let y: number
 
@@ -41,6 +42,11 @@ export class Node {
                 break
         }
 
-        return [x, y]
+        if (center) {
+            x += PortSize / 2
+            y += PortSize / 2
+        }
+
+        return { x, y }
     }
 }

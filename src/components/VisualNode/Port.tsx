@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react'
 import { Node } from '../../lib/node'
 import { Port, Side } from '../../lib/port'
 import { Link } from './Link'
+import { PortLink } from '../../lib/link'
 
 const PortSize = 15
 const PortSpacing = 5
@@ -34,15 +35,31 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
         setShowDescription(false)
     }
 
-    const [x, y] = node.getPortLocation(port)
+    const portLocation = node.getPortLocation(port)
+
+    let linkVisual: React.ReactNode
+    if (port.linkedFrom) {
+        const link = new PortLink(port.linkedFrom, [node, port])
+        link.recomputePath([node, port.linkedFrom[0]])
+
+        linkVisual = (
+            <Link
+                dstNode={node}
+                dstPort={port}
+                srcNode={port.linkedFrom[0]}
+                srcPort={port.linkedFrom[1]}
+                links={link.middlePoints}
+            />
+        )
+    }
 
     return (
         <g>
             <rect
                 stroke='#000000'
                 fill='#ffffff'
-                x={x}
-                y={y}
+                x={portLocation.x}
+                y={portLocation.y}
                 width={PortSize}
                 height={PortSize}
                 onPointerDown={onPointerDown}
@@ -51,18 +68,19 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
                 onMouseLeave={onMouseLeave}
             />
             <text
-                x={x + PortSize / 2}
-                y={y + PortSize / 2}
+                x={portLocation.x + PortSize / 2}
+                y={portLocation.y + PortSize / 2}
                 textAnchor='middle'
                 dominantBaseline='central'
                 pointerEvents='none'
             >
                 {port.glyph()}
             </text>
-            {port.linkedFrom && (
+            {linkVisual}
+            {/* {port.linkedFrom && (
                 <Link dstNode={node} dstPort={port} srcNode={port.linkedFrom[0]} srcPort={port.linkedFrom[1]} />
-            )}
-            {showDescription && <PortDescription port={port} ox={x} oy={y} />}
+            )} */}
+            {showDescription && <PortDescription port={port} ox={portLocation.x} oy={portLocation.y} />}
         </g>
     )
 }
