@@ -49,6 +49,17 @@ export class PortLink {
         }
         this.middlePoints.push(offsetEnd)
     }
+
+    get start(): Point {
+        return this.src[0].getPortLocation(this.src[1], true)
+    }
+    get end(): Point | null {
+        if (this.dst) {
+            return this.dst[0].getPortLocation(this.dst[1], true)
+        } else {
+            return null
+        }
+    }
 }
 
 function squareMidpoint(start: Point, end: Point): Point | null {

@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react'
 import { Node } from '../../lib/node'
 import { Port, Side } from '../../lib/port'
-import { Link } from './Link'
+import { Link } from './Link/Link'
 import { PortLink } from '../../lib/link'
 
 const PortSize = 15
@@ -37,22 +37,6 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
 
     const portLocation = node.getPortLocation(port)
 
-    let linkVisual: React.ReactNode
-    if (port.linkedFrom) {
-        const link = new PortLink(port.linkedFrom, [node, port])
-        link.recomputePath([node, port.linkedFrom[0]])
-
-        linkVisual = (
-            <Link
-                dstNode={node}
-                dstPort={port}
-                srcNode={port.linkedFrom[0]}
-                srcPort={port.linkedFrom[1]}
-                links={link.middlePoints}
-            />
-        )
-    }
-
     return (
         <g>
             <rect
@@ -76,7 +60,6 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
             >
                 {port.glyph()}
             </text>
-            {linkVisual}
             {/* {port.linkedFrom && (
                 <Link dstNode={node} dstPort={port} srcNode={port.linkedFrom[0]} srcPort={port.linkedFrom[1]} />
             )} */}

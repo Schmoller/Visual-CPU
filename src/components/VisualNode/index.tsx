@@ -9,6 +9,7 @@ export interface VisualNodeProps {
     node: Node
 
     allowEdit?: boolean
+    selected?: boolean
     onMouseDown?: (node: Node, event: React.PointerEvent) => void
     onMouseUp?: (node: Node, event: React.PointerEvent) => void
 
@@ -19,6 +20,7 @@ export interface VisualNodeProps {
 export const VisualNode: FC<VisualNodeProps> = ({
     node,
     allowEdit,
+    selected,
     onMouseDown,
     onMouseUp,
     onLinkStart,

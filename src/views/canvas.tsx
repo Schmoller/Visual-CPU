@@ -1,19 +1,25 @@
-import React, { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { VisualNode } from '../components/VisualNode'
+import { PortLink } from '../lib/link'
 import { Node } from '../lib/node'
 import { Port } from '../lib/port'
 import { TestNode } from '../lib/nodes/test'
 
 import './style.css'
+import { Link } from '../components/VisualNode/Link/Link'
 
 let currentMouseX: number
 let currentMouseY: number
+
+type Selectable = PortLink | Node
 
 export interface CanvasProps {
     gridSnap?: number
 }
 
 export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
+    const [links, setLinks] = useState<PortLink[]>([])
+    const [selected, setSelected] = useState<Selectable | null>(null)
     const [nodes, setNodes] = useState<Node[]>([])
     const [draggedNode, setDraggedNode] = useState<Node | null>(null)
     const [draggedPort, setDraggedPort] = useState<[Port, Node] | null>(null)
@@ -26,6 +32,11 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [zoom, setZoom] = useState(1)
     const [panX, setPanX] = useState(0)
     const [panY, setPanY] = useState(0)
+
+    const fullLinks = useMemo(() => links.filter(item => !!item.dst), [links])
+    const onLinkMouseDown = (event: React.MouseEvent, link: PortLink) => {
+        setSelected(link)
+    }
 
     const doCanvasMouseDown = (event: React.MouseEvent) => {
         if (event.button === 1) {
@@ -101,7 +112,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     }
 
     const onNodeMouseUp = (node: Node, event: React.PointerEvent) => {
-        // Noop
+        setSelected(node)
     }
 
     const onPortLinkStart = (node: Node, port: Port) => {
@@ -111,9 +122,16 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const onPortMouseUp = (node: Node, port: Port, event: React.PointerEvent) => {
         if (draggedPort) {
             const [srcPort, srcNode] = draggedPort
+            let link: PortLink
             if (!port.linkFrom(srcNode, srcPort)) {
+                link = new PortLink([node, port], [srcNode, srcPort])
                 srcPort.linkFrom(node, port)
+            } else {
+                link = new PortLink([srcNode, srcPort], [node, port])
             }
+            link.recomputePath()
+
+            setLinks([...links, link])
             setDraggedPort(null)
         }
     }
@@ -121,6 +139,22 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const doWheel = (event: React.WheelEvent) => {
         setZoom(zoom - event.deltaY * 0.01)
     }
+
+    const renderedLinks = fullLinks.map(link => {
+        return <Link link={link} selected={link === selected} onMouseDown={onLinkMouseDown} />
+    })
+    const renderedNodes = nodes.map((node, index) => (
+        <VisualNode
+            key={index}
+            node={node}
+            allowEdit={editMode}
+            onMouseDown={onNodeMouseDown}
+            onMouseUp={onNodeMouseUp}
+            onLinkStart={onPortLinkStart}
+            onPortMouseUp={onPortMouseUp}
+            selected={node === selected}
+        />
+    ))
 
     return (
         <div
@@ -145,17 +179,8 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 }}
             >
                 <g transform={`scale(${zoom} ${zoom}) translate(${panX} ${panY})`}>
-                    {nodes.map((node, index) => (
-                        <VisualNode
-                            key={index}
-                            node={node}
-                            allowEdit={editMode}
-                            onMouseDown={onNodeMouseDown}
-                            onMouseUp={onNodeMouseUp}
-                            onLinkStart={onPortLinkStart}
-                            onPortMouseUp={onPortMouseUp}
-                        />
-                    ))}
+                    {renderedNodes}
+                    {renderedLinks}
                 </g>
             </svg>
         </div>
