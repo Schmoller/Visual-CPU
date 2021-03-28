@@ -50,6 +50,41 @@ export class PortLink {
         this.middlePoints.push(offsetEnd)
     }
 
+    splitSegment(start: number, end: number, position: 'left' | 'right') {
+        if (start < 0) {
+            return false
+        }
+        if (end < start) {
+            return false
+        }
+        if (this.end != null) {
+            if (end > this.middlePoints.length + 2) {
+                return false
+            }
+        } else {
+            if (end > this.middlePoints.length + 1) {
+                return false
+            }
+        }
+
+        let startPoint: Point
+        let endPoint: Point
+        if (start == 0) {
+            startPoint = this.start
+        } else {
+            startPoint = this.middlePoints[start - 1]
+        }
+        if (this.end != null && end == this.middlePoints.length + 2) {
+            endPoint = this.end
+        } else {
+            endPoint = this.middlePoints[end - 1]
+        }
+
+        const midPoint = { x: (startPoint.x + endPoint.x) / 2, y: (startPoint.y + endPoint.y) / 2 }
+        this.middlePoints.splice(start - 1, 0, midPoint)
+        return true
+    }
+
     get start(): Point {
         return this.src[0].getPortLocation(this.src[1], true)
     }

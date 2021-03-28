@@ -7,6 +7,7 @@ import { TestNode } from '../lib/nodes/test'
 
 import './style.css'
 import { Link } from '../components/VisualNode/Link/Link'
+import { Point } from '../lib/common'
 
 let currentMouseX: number
 let currentMouseY: number
@@ -69,6 +70,8 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             draggedNode.x = Math.round(draggedNode.x / gridSnap) * gridSnap
             draggedNode.y = Math.round(draggedNode.y / gridSnap) * gridSnap
 
+            draggedNode.updateLinks()
+
             setForcedUpdate(num => num + 1)
         } else if (panMode) {
             setPanX(event.clientX / zoom - cursorPanOffset.current.x + panOffset.current.x)
@@ -122,16 +125,15 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const onPortMouseUp = (node: Node, port: Port, event: React.PointerEvent) => {
         if (draggedPort) {
             const [srcPort, srcNode] = draggedPort
-            let link: PortLink
-            if (!port.linkFrom(srcNode, srcPort)) {
-                link = new PortLink([node, port], [srcNode, srcPort])
-                srcPort.linkFrom(node, port)
-            } else {
-                link = new PortLink([srcNode, srcPort], [node, port])
+            let link = srcNode.link(srcPort, node, port)
+            if (!link) {
+                link = node.link(port, srcNode, srcPort)
             }
-            link.recomputePath()
+            if (link) {
+                link.recomputePath()
+                setLinks([...links, link])
+            }
 
-            setLinks([...links, link])
             setDraggedPort(null)
         }
     }
@@ -139,9 +141,19 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const doWheel = (event: React.WheelEvent) => {
         setZoom(zoom - event.deltaY * 0.01)
     }
+    const onMoveSegmentStart = (start: Point, end: Point) => {}
+    const onSplitSegmentStart = (start: Point, end: Point, position: 'left' | 'right') => {}
 
     const renderedLinks = fullLinks.map(link => {
-        return <Link link={link} selected={link === selected} onMouseDown={onLinkMouseDown} />
+        return (
+            <Link
+                link={link}
+                selected={link === selected}
+                onMouseDown={onLinkMouseDown}
+                onMoveSegmentStart={onMoveSegmentStart}
+                onSplitSegmentStart={onSplitSegmentStart}
+            />
+        )
     })
     const renderedNodes = nodes.map((node, index) => (
         <VisualNode

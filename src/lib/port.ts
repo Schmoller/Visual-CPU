@@ -1,3 +1,4 @@
+import { PortLink } from './link'
 import { Node } from './node'
 
 export enum Side {
@@ -8,18 +9,10 @@ export enum Side {
 }
 
 export abstract class Port {
-    linkedFrom: [Node, Port] | null = null
+    inputLink: PortLink | null = null
+    outputLinks: PortLink[] = []
 
     constructor(public name: string, public side: Side, public slot: number) {}
-
-    linkFrom(node: Node, port: Port): boolean {
-        if (this.canConnectInbound(port)) {
-            this.linkedFrom = [node, port]
-            return true
-        }
-
-        return false
-    }
 
     // Temporary
     abstract glyph(): string

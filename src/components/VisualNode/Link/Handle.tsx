@@ -5,7 +5,7 @@ export interface HandleProps {
     position: Point
     splitting?: boolean
     hitSize?: number
-    onMouseDown?: (event: React.MouseEvent) => {}
+    onMouseDown?: (event: React.MouseEvent) => void
 }
 
 export const Handle: FC<HandleProps> = ({ position, splitting, hitSize = 8, onMouseDown }) => {

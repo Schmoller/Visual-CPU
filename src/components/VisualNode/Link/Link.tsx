@@ -17,6 +17,8 @@ export interface LinkProps {
     onHoverLeave?: (event: React.MouseEvent, link: PortLink) => void
     onMouseDown?: (event: React.MouseEvent, link: PortLink) => void
     onMouseUp?: (event: React.MouseEvent, link: PortLink) => void
+    onMoveSegmentStart?: (start: Point, end: Point) => void
+    onSplitSegmentStart?: (start: Point, end: Point, position: 'left' | 'right') => void
 }
 
 export const Link: FC<LinkProps> = ({
@@ -26,6 +28,8 @@ export const Link: FC<LinkProps> = ({
     onHoverLeave,
     onMouseDown,
     onMouseUp,
+    onMoveSegmentStart,
+    onSplitSegmentStart,
     hitSensitivity = DefaultHitSensitivity,
 }) => {
     const start = link.start
@@ -49,9 +53,21 @@ export const Link: FC<LinkProps> = ({
             const midPoint = { x: (point.x + previous.x) / 2, y: (point.y + previous.y) / 2 }
             const quarterPoint = { x: (midPoint.x + previous.x) / 2, y: (midPoint.y + previous.y) / 2 }
             const threeQuarterPoint = { x: (point.x + midPoint.x) / 2, y: (point.y + midPoint.y) / 2 }
-            handles.push(<Handle position={midPoint} />)
-            handles.push(<Handle position={quarterPoint} splitting />)
-            handles.push(<Handle position={threeQuarterPoint} splitting />)
+            handles.push(<Handle position={midPoint} onMouseDown={() => onMoveSegmentStart?.(previous, point)} />)
+            handles.push(
+                <Handle
+                    position={quarterPoint}
+                    splitting
+                    onMouseDown={() => onSplitSegmentStart?.(previous, point, 'left')}
+                />,
+            )
+            handles.push(
+                <Handle
+                    position={threeQuarterPoint}
+                    splitting
+                    onMouseDown={() => onSplitSegmentStart?.(previous, point, 'right')}
+                />,
+            )
             previous = point
         }
     }
