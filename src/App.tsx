@@ -1,13 +1,9 @@
 import React from 'react'
 import './style/style'
-import { Canvas } from './views/canvas'
+import { Layout } from './views/Layout'
 
 function App() {
-    return (
-        <div className='main-layout'>
-            <Canvas></Canvas>
-        </div>
-    )
+    return <Layout />
 }
 
 export default App

@@ -1,5 +1,16 @@
 .main-layout {
     display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
     width: 100vw;
     height: 100vh;
+}
+.toolbar {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: '1em';
+    padding: 0.4em;
 }
