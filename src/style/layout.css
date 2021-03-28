@@ -6,6 +6,12 @@
     width: 100vw;
     height: 100vh;
 }
+.main-layout .inner {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex-grow: 1;
+}
 .toolbar {
     display: flex;
     flex-direction: row;
@@ -13,4 +19,30 @@
     align-items: center;
     gap: '1em';
     padding: 0.4em;
+    
+    border-bottom: 1px solid #333434;
+    
+}
+.drawer {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    
+    box-shadow: inset 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+.drawer-body {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+.drawer-handle {
+    cursor: move;
+    width: 0.5em;
+    min-width: 0.5m;
+    flex-shrink: 0;
+    
+    background-color: #595b5b;
+    box-shadow: inset 0 1px #737373;
+    border-left: 1px solid #333434;
+    border-right: 1px solid #333434;
+    color: #c6c8c8;
 }

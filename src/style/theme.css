@@ -1,3 +1,9 @@
 .background-workspace {
     background-color: rgb(241, 241, 241);
 }
+
+/* clear some defaults */
+* {
+    user-select: none;
+}
+
