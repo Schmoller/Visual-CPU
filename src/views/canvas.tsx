@@ -19,6 +19,7 @@ export interface CanvasProps {
 }
 
 export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
+    const canvasDiv = useRef<HTMLDivElement>(null)
     const [links, setLinks] = useState<PortLink[]>([])
     const [selected, setSelected] = useState<Selectable | null>(null)
     const [nodes, setNodes] = useState<Node[]>([])
@@ -33,6 +34,13 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [zoom, setZoom] = useState(1)
     const [panX, setPanX] = useState(0)
     const [panY, setPanY] = useState(0)
+
+    let canvasRect: DOMRect
+    if (canvasDiv.current) {
+        canvasRect = canvasDiv.current.getBoundingClientRect()
+    } else {
+        canvasRect = new DOMRect()
+    }
 
     const fullLinks = useMemo(() => links.filter(item => !!item.dst), [links])
     const onLinkMouseDown = (event: React.MouseEvent, link: PortLink) => {
@@ -139,7 +147,17 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     }
 
     const doWheel = (event: React.WheelEvent) => {
-        setZoom(zoom - event.deltaY * 0.01)
+        const newZoom = zoom - event.deltaY * 0.001
+        const cursorX = (event.clientX - canvasRect.x) / zoom - panX
+        const cursorY = (event.clientY - canvasRect.y) / zoom - panY
+        const cursorNewX = (event.clientX - canvasRect.x) / newZoom - panX
+        const cursorNewY = (event.clientY - canvasRect.y) / newZoom - panY
+        const deltaX = cursorNewX - cursorX
+        const deltaY = cursorNewY - cursorY
+
+        setZoom(newZoom)
+        setPanX(panX + deltaX)
+        setPanY(panY + deltaY)
     }
     const onMoveSegmentStart = (start: Point, end: Point) => {}
     const onSplitSegmentStart = (start: Point, end: Point, position: 'left' | 'right') => {}
@@ -170,6 +188,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
 
     return (
         <div
+            ref={canvasDiv}
             className='background-workspace workspace'
             onMouseDown={doCanvasMouseDown}
             onMouseUp={doCanvasMouseUp}
