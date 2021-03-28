@@ -2,6 +2,7 @@
   "name": "visual-cpu",
   "version": "0.1.0",
   "private": true,
+  "main": "build/electron/main.js",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.5",
@@ -18,10 +19,14 @@
     "web-vitals": "^1.1.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start:browser": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:electron": "concurrently -k \"BROWSER=none react-scripts start\" \"npm:internal-compile-electron:watch\" \"npm:internal-electron\"",
+    "internal-electron": "wait-on tcp:3000 && electron .",
+    "internal-compile-electron": "tsc --project electron/tsconfig.json",
+    "internal-compile-electron:watch": "tsc --watch --project electron/tsconfig.json"
   },
   "eslintConfig": {
     "extends": [
@@ -40,5 +45,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^6.0.0",
+    "electron": "^12.0.2",
+    "electron-is-dev": "^2.0.0",
+    "wait-on": "^5.3.0"
   }
 }
