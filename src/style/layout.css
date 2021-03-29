@@ -33,6 +33,11 @@
 .drawer-body {
     flex-grow: 1;
     flex-shrink: 1;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 .drawer-handle {
     cursor: move;

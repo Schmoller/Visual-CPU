@@ -1,27 +1,21 @@
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useCallback, useRef, useState } from 'react'
+import { Textbox } from '../Topcoat'
+import { Item } from './Item'
+import './style.css'
+
 export const ComponentTray: FC = () => {
-    const [width, setWidth] = useState(300)
-    const drawer = useRef<HTMLDivElement>(null)
+    const [searchText, setSearchText] = useState('')
 
-    const onResize = (event: MouseEvent) => {
-        const clientRect = drawer.current!.getBoundingClientRect()
-        const width = event.clientX - clientRect.x
-        setWidth(width)
-    }
-    const onResizeFinish = () => {
-        document.removeEventListener('mousemove', onResize)
-        document.removeEventListener('mouseup', onResizeFinish)
-    }
-
-    const onResizeStart = (event: React.MouseEvent) => {
-        document.addEventListener('mousemove', onResize)
-        document.addEventListener('mouseup', onResizeFinish)
-    }
+    const onSearch = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchText(event.currentTarget.value)
+    }, [])
 
     return (
-        <div className='drawer' ref={drawer} style={{ width }}>
-            <div className='drawer-body'>tray</div>
-            <div className='drawer-handle' onMouseDown={onResizeStart}></div>
+        <div className='component-tray'>
+            <Textbox value={searchText} onValueChange={onSearch} />
+            <div className='tray'>
+                <Item title='Text'></Item>
+            </div>
         </div>
     )
 }
