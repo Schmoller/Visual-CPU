@@ -17,6 +17,9 @@ export abstract class Port {
     // Temporary
     abstract glyph(): string
     abstract canConnectInbound(source: Port): boolean
+    size(): number {
+        return 1
+    }
 }
 
 export class InputPort extends Port {
@@ -53,5 +56,18 @@ export class BiDiPort extends Port {
 
     canConnectInbound(source: Port): boolean {
         return true
+    }
+}
+export class BusPort extends Port {
+    glyph(): string {
+        return 'B'
+    }
+
+    canConnectInbound(source: Port): boolean {
+        return true
+    }
+
+    size(): number {
+        return 2
     }
 }

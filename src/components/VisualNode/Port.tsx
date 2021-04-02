@@ -36,24 +36,38 @@ export const NodePort: FC<PortProps> = ({ node, port, onLinkStart, onMouseUp }) 
     }
 
     const portLocation = node.getPortLocation(port)
+    let width = PortSize
+    let height = PortSize
+
+    switch (port.side) {
+        case Side.Left:
+        case Side.Right:
+            height = PortSize * port.size() + PortSpacing * (port.size() - 1)
+            break
+
+        case Side.Top:
+        case Side.Bottom:
+            width = PortSize * port.size() + PortSpacing * (port.size() - 1)
+            break
+    }
 
     return (
         <g>
             <rect
-                stroke='#000000'
-                fill='#ffffff'
+                stroke='#9daca9'
+                fill='#e5e9e8'
                 x={portLocation.x}
                 y={portLocation.y}
-                width={PortSize}
-                height={PortSize}
+                width={width}
+                height={height}
                 onPointerDown={onPointerDown}
                 onPointerUp={onPointerUp}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
             />
             <text
-                x={portLocation.x + PortSize / 2}
-                y={portLocation.y + PortSize / 2}
+                x={portLocation.x + width / 2}
+                y={portLocation.y + height / 2}
                 textAnchor='middle'
                 dominantBaseline='central'
                 pointerEvents='none'

@@ -25,7 +25,7 @@ export const ComponentTray: FC = () => {
 
     return (
         <div className='component-tray'>
-            <Textbox value={searchText} onValueChange={onSearch} />
+            <Textbox value={searchText} onValueChange={onSearch} placeholder='Search' />
             <div className='tray'>
                 {types.map(type => {
                     const metadata = type.metadata()
