@@ -8,6 +8,8 @@ import { TestNode } from '../lib/nodes/test'
 import './style.css'
 import { Link } from '../components/VisualNode/Link/Link'
 import { Point } from '../lib/common'
+import { useEditorState } from '../lib/editor'
+import { createNodeFromId } from '../lib/nodes'
 
 let currentMouseX: number
 let currentMouseY: number
@@ -19,6 +21,7 @@ export interface CanvasProps {
 }
 
 export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
+    const editorState = useEditorState()
     const canvasDiv = useRef<HTMLDivElement>(null)
     const [links, setLinks] = useState<PortLink[]>([])
     const [selected, setSelected] = useState<Selectable | null>(null)
@@ -88,6 +91,27 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
 
         currentMouseX = event.clientX
         currentMouseY = event.clientY
+    }
+    const onDragOver = (event: React.DragEvent) => {
+        const draggedTypeId = editorState.placementComponent
+        if (draggedTypeId) {
+            event.preventDefault()
+        }
+    }
+    const onDragDrop = (event: React.DragEvent) => {
+        const draggedTypeId = editorState.placementComponent
+        if (draggedTypeId) {
+            event.preventDefault()
+            let x = (event.clientX - canvasRect.x) / zoom - panX
+            let y = (event.clientY - canvasRect.y) / zoom - panY
+
+            x = Math.round(x / gridSnap) * gridSnap
+            y = Math.round(y / gridSnap) * gridSnap
+            const node = createNodeFromId(draggedTypeId, x, y)
+            if (node) {
+                setNodes([...nodes, node])
+            }
+        }
     }
 
     const doKeyUp = (event: React.KeyboardEvent) => {}
@@ -195,6 +219,8 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             onMouseMove={doCanvasMouseDrag}
             onKeyUp={doKeyUp}
             onWheel={doWheel}
+            onDragOver={onDragOver}
+            onDrop={onDragDrop}
             style={{
                 cursor: panMode || draggedNode ? 'grabbing' : 'inherit',
             }}

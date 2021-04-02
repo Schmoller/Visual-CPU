@@ -27,6 +27,10 @@
 .tray-item:active {
   background-color: #393a3a;
 }
+.tray-item .icon {
+  display: flex;
+  justify-content: center;
+}
 .tray-item .title {
   overflow: hidden;
   text-overflow: ellipsis;

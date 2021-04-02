@@ -1,7 +1,19 @@
 import { Node } from '../node'
 import { BiDiPort, InputPort, OutputPort, Side } from '../port'
+import { MetaData } from './common'
 
 export class TestNode extends Node {
+    static createExample() {
+        return new TestNode(0, 0)
+    }
+
+    static metadata(): MetaData {
+        return {
+            id: 'test-node',
+            name: 'Test Node',
+        }
+    }
+
     constructor(x: number, y: number) {
         super(x, y, 120, 60)
 
