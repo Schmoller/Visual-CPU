@@ -1,0 +1,26 @@
+.window-frame {
+    position: absolute;
+    padding: 0.25em;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background-color: #4b4d4e;
+    border: 1px solid #333434;
+    box-shadow: inset 0 1px #737373;
+    color: #c6c8c8;
+}
+
+.window-header {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0.25em;
+    font-size: 0.875em;
+}
+
+.window-content {
+    flex-grow: 1;
+    flex-shrink: 1;
+    border: 1px solid #333434;
+}
+
+
