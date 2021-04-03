@@ -23,4 +23,6 @@
     border: 1px solid #333434;
 }
 
-
+.window-container {
+    overflow: hidden;
+}

@@ -1,4 +1,6 @@
-import React, { FC, useCallback, useRef, useState } from 'react'
+import React, { FC, useCallback, useContext, useRef, useState } from 'react'
+import ReactDOM from 'react-dom'
+import { WindowContext } from './Container'
 import { ResizeDirection, WindowFrame } from './WindowFrame'
 
 type ResizeOrMove = ResizeDirection | 'move'
@@ -14,9 +16,12 @@ export interface WindowProps {
     title: React.ReactNode
     minWidth?: number
     minHeight?: number
+
+    children?: React.ReactNode
 }
 
-export const Window: FC<WindowProps> = ({
+// export const Window: FC<WindowProps> = ({
+export function Window({
     initialX,
     initialY,
     initialWidth,
@@ -25,7 +30,9 @@ export const Window: FC<WindowProps> = ({
     children,
     minWidth = DefaultMinWidth,
     minHeight = DefaultMinHeight,
-}) => {
+}: WindowProps) {
+    const windowContainer = useContext(WindowContext)
+
     const [x, setX] = useState(initialX)
     const [y, setY] = useState(initialY)
     const [width, setWidth] = useState(initialWidth)
@@ -159,18 +166,22 @@ export const Window: FC<WindowProps> = ({
             }
         }
     }, [])
-
-    return (
-        <WindowFrame
-            x={x}
-            y={y}
-            width={width}
-            height={height}
-            title={title}
-            onHeaderMouseDown={onHeaderMouseDown}
-            onStartResize={onStartResize}
-        >
-            {children}
-        </WindowFrame>
-    )
+    if (windowContainer.current) {
+        return ReactDOM.createPortal(
+            <WindowFrame
+                x={x}
+                y={y}
+                width={width}
+                height={height}
+                title={title}
+                onHeaderMouseDown={onHeaderMouseDown}
+                onStartResize={onStartResize}
+            >
+                {children}
+            </WindowFrame>,
+            windowContainer.current,
+        )
+    } else {
+        return null
+    }
 }
