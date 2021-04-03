@@ -12,6 +12,7 @@ export interface WindowProps {
     initialY: number
     initialWidth: number
     initialHeight: number
+    allowResize?: boolean
 
     title: React.ReactNode
     minWidth?: number
@@ -26,6 +27,7 @@ export function Window({
     initialY,
     initialWidth,
     initialHeight,
+    allowResize,
     title,
     children,
     minWidth = DefaultMinWidth,
@@ -175,7 +177,7 @@ export function Window({
                 height={height}
                 title={title}
                 onHeaderMouseDown={onHeaderMouseDown}
-                onStartResize={onStartResize}
+                onStartResize={allowResize ? onStartResize : undefined}
             >
                 {children}
             </WindowFrame>,

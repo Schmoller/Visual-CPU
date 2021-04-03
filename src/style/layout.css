@@ -51,3 +51,14 @@
     border-right: 1px solid #333434;
     color: #c6c8c8;
 }
+
+.form {
+    display: flex;
+    flex-direction: column;
+}
+.form > *:not(:first-child) {
+    margin-top: 0.4em;
+}
+.space-above {
+    margin-top: 0.4em;
+}

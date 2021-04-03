@@ -6,6 +6,12 @@ export interface TextboxProps {
     type?: 'text'
     large?: boolean
     disabled?: boolean
+    onBlur?: (event: React.FocusEvent) => void
+    onFocus?: (event: React.FocusEvent) => void
+    onKeyDown?: (event: React.KeyboardEvent) => void
+    onKeyUp?: (event: React.KeyboardEvent) => void
+    onKeyPress?: (event: React.KeyboardEvent) => void
+    onSubmit?: (event: React.FormEvent) => void
 }
 export const Textbox: FC<TextboxProps> = ({
     value,
@@ -14,6 +20,12 @@ export const Textbox: FC<TextboxProps> = ({
     type = 'text',
     large = false,
     disabled = false,
+    onBlur,
+    onFocus,
+    onKeyDown,
+    onKeyUp,
+    onKeyPress,
+    onSubmit,
 }) => {
     let textboxClass: string
     if (large) {
@@ -29,6 +41,12 @@ export const Textbox: FC<TextboxProps> = ({
             onChange={onValueChange}
             placeholder={placeholder}
             disabled={disabled}
+            onBlur={onBlur}
+            onKeyDown={onKeyDown}
+            onFocus={onFocus}
+            onKeyUp={onKeyUp}
+            onKeyPress={onKeyPress}
+            onSubmit={onSubmit}
         />
     )
 }

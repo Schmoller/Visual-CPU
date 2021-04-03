@@ -1,9 +1,17 @@
+import { ComponentClass, FunctionComponent, ReactElement, ReactNode } from 'react'
 import { Point } from './common'
 import { PortLink } from './link'
 import { Port, Side } from './port'
 
 export const PortSize = 15
 export const PortSpacing = 5
+export interface NodeDisplayProps<T extends Node> {
+    node: T
+}
+export interface NodeSettingsProps<T extends Node> {
+    node: T
+    onClose: () => void
+}
 
 export interface Node {
     x: number
@@ -15,6 +23,9 @@ export interface Node {
 }
 
 export class Node {
+    displayComponent: FunctionComponent<NodeDisplayProps<any>> | ComponentClass<NodeDisplayProps<any>> | null = null
+    settingsComponent: FunctionComponent<NodeSettingsProps<any>> | ComponentClass<NodeSettingsProps<any>> | null = null
+
     constructor(public x: number, public y: number, public width: number, public height: number) {
         this.ports = []
     }

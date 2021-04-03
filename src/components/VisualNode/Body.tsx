@@ -9,12 +9,25 @@ export interface BodyProps {
     width: number
     height: number
 
+    display?: React.ReactNode
+
     allowEdit?: boolean
     onMouseDown?: (event: React.PointerEvent) => void
     onMouseUp?: (event: React.PointerEvent) => void
+    onDoubleClick?: (event: React.MouseEvent) => void
 }
 
-export const Body: FC<BodyProps> = ({ x, y, width, height, allowEdit, onMouseDown, onMouseUp }) => {
+export const Body: FC<BodyProps> = ({
+    x,
+    y,
+    width,
+    height,
+    allowEdit,
+    onMouseDown,
+    onMouseUp,
+    display,
+    onDoubleClick,
+}) => {
     return (
         <g transform='translate(0.5,0.5)'>
             <rect
@@ -30,7 +43,11 @@ export const Body: FC<BodyProps> = ({ x, y, width, height, allowEdit, onMouseDow
                 cursor={allowEdit ? 'move' : undefined}
                 onPointerDown={onMouseDown}
                 onPointerUp={onMouseUp}
+                onDoubleClick={onDoubleClick}
             />
+            <g transform={`translate(${x}, ${y})`} pointerEvents='none'>
+                {display}
+            </g>
         </g>
     )
 }
