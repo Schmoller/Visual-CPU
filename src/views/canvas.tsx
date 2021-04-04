@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { VisualNode } from '../components/VisualNode'
 import { PortLink } from '../lib/link'
 import { Node } from '../lib/node'
@@ -38,12 +38,13 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [panX, setPanX] = useState(0)
     const [panY, setPanY] = useState(0)
 
-    let canvasRect: DOMRect
-    if (canvasDiv.current) {
-        canvasRect = canvasDiv.current.getBoundingClientRect()
-    } else {
-        canvasRect = new DOMRect()
-    }
+    const getCanvasRect = useCallback(() => {
+        if (canvasDiv.current) {
+            return canvasDiv.current.getBoundingClientRect()
+        } else {
+            return new DOMRect()
+        }
+    }, [])
 
     const fullLinks = useMemo(() => links.filter(item => !!item.dst), [links])
     const onLinkMouseDown = (event: React.MouseEvent, link: PortLink) => {
@@ -51,12 +52,14 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     }
 
     const doCanvasMouseDown = (event: React.MouseEvent) => {
+        const canvasRect = getCanvasRect()
+
         if (event.button === 1) {
             setPanMode(true)
             panOffset.current.x = panX
             panOffset.current.y = panY
-            cursorPanOffset.current.x = event.clientX / zoom
-            cursorPanOffset.current.y = event.clientY / zoom
+            cursorPanOffset.current.x = (event.clientX - canvasRect.x) / zoom
+            cursorPanOffset.current.y = (event.clientY - canvasRect.y) / zoom
         }
     }
 
@@ -74,9 +77,11 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     }
 
     const doCanvasMouseDrag = (event: React.MouseEvent) => {
+        const canvasRect = getCanvasRect()
+
         if (draggedNode) {
-            draggedNode.x = event.clientX / zoom + dragOffset.current.x
-            draggedNode.y = event.clientY / zoom + dragOffset.current.y
+            draggedNode.x = (event.clientX - canvasRect.x) / zoom + dragOffset.current.x
+            draggedNode.y = (event.clientY - canvasRect.y) / zoom + dragOffset.current.y
 
             draggedNode.x = Math.round(draggedNode.x / gridSnap) * gridSnap
             draggedNode.y = Math.round(draggedNode.y / gridSnap) * gridSnap
@@ -85,12 +90,12 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
 
             setForcedUpdate(num => num + 1)
         } else if (panMode) {
-            setPanX(event.clientX / zoom - cursorPanOffset.current.x + panOffset.current.x)
-            setPanY(event.clientY / zoom - cursorPanOffset.current.y + panOffset.current.y)
+            setPanX((event.clientX - canvasRect.x) / zoom - cursorPanOffset.current.x + panOffset.current.x)
+            setPanY((event.clientY - canvasRect.y) / zoom - cursorPanOffset.current.y + panOffset.current.y)
         }
 
-        currentMouseX = event.clientX
-        currentMouseY = event.clientY
+        currentMouseX = event.clientX - canvasRect.x
+        currentMouseY = event.clientY - canvasRect.y
     }
     const onDragOver = (event: React.DragEvent) => {
         const draggedTypeId = editorState.placementComponent
@@ -99,6 +104,8 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
         }
     }
     const onDragDrop = (event: React.DragEvent) => {
+        const canvasRect = getCanvasRect()
+
         const draggedTypeId = editorState.placementComponent
         if (draggedTypeId) {
             event.preventDefault()
@@ -138,11 +145,13 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     })
 
     const onNodeMouseDown = (node: Node, event: React.PointerEvent) => {
+        const canvasRect = getCanvasRect()
+
         if (editMode && event.button == 0) {
             setDraggedNode(node)
 
-            dragOffset.current.x = node.x - event.clientX / zoom
-            dragOffset.current.y = node.y - event.clientY / zoom
+            dragOffset.current.x = node.x - (event.clientX - canvasRect.x) / zoom
+            dragOffset.current.y = node.y - (event.clientY - canvasRect.y) / zoom
         }
     }
 
@@ -171,6 +180,8 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     }
 
     const doWheel = (event: React.WheelEvent) => {
+        const canvasRect = getCanvasRect()
+
         const newZoom = zoom - event.deltaY * 0.001
         const cursorX = (event.clientX - canvasRect.x) / zoom - panX
         const cursorY = (event.clientY - canvasRect.y) / zoom - panY
