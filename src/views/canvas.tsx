@@ -121,19 +121,49 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
         }
     }
 
-    const doKeyUp = (event: React.KeyboardEvent) => {}
+    const deleteNode = useCallback(
+        (node: Node) => {
+            for (const port of node.ports) {
+                if (port.inputLink) {
+                    deleteLink(port.inputLink)
+                }
+                for (const link of port.outputLinks) {
+                    deleteLink(link)
+                }
+            }
+
+            const index = nodes.indexOf(node)
+            if (index >= 0) {
+                nodes.splice(index, 1)
+                setNodes([...nodes])
+            }
+        },
+        [nodes],
+    )
+    const deleteLink = useCallback(
+        (link: PortLink) => {
+            if (link.dst) {
+                link.src[0].unlink(link.src[1], link.dst[0], link.dst[1])
+            }
+            const index = links.indexOf(link)
+            if (index >= 0) {
+                links.splice(index, 1)
+                setLinks([...links])
+            }
+        },
+        [links],
+    )
 
     useEffect(() => {
         const onGlobalKeyUp = (event: KeyboardEvent) => {
-            if (event.key == 'a') {
-                let x = currentMouseX / zoom - panX
-                let y = currentMouseY / zoom - panY
-
-                x = Math.round(x / gridSnap) * gridSnap
-                y = Math.round(y / gridSnap) * gridSnap
-
-                const node = new TestNode(x, y)
-                setNodes([...nodes, node])
+            if (event.key === 'Delete') {
+                if (selected) {
+                    if (selected instanceof Node) {
+                        deleteNode(selected)
+                    } else if (selected instanceof PortLink) {
+                        deleteLink(selected)
+                    }
+                }
             }
         }
 
@@ -228,7 +258,6 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             onMouseDown={doCanvasMouseDown}
             onMouseUp={doCanvasMouseUp}
             onMouseMove={doCanvasMouseDrag}
-            onKeyUp={doKeyUp}
             onWheel={doWheel}
             onDragOver={onDragOver}
             onDrop={onDragDrop}
