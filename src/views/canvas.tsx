@@ -9,6 +9,7 @@ import { Point } from '../lib/common'
 import { useEditorState } from '../lib/editor'
 import { createNodeFromId } from '../lib/nodes'
 import { Port } from '../lib/ports'
+import { useStateArray } from '../lib/react_util'
 
 let currentMouseX: number
 let currentMouseY: number
@@ -22,9 +23,9 @@ export interface CanvasProps {
 export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const editorState = useEditorState()
     const canvasDiv = useRef<HTMLDivElement>(null)
-    const [links, setLinks] = useState<PortLink[]>([])
+    const [links, addLink, removeLink] = useStateArray<PortLink>()
+    const [nodes, addNode, removeNode] = useStateArray<Node>()
     const [selected, setSelected] = useState<Selectable | null>(null)
-    const [nodes, setNodes] = useState<Node[]>([])
     const [draggedNode, setDraggedNode] = useState<Node | null>(null)
     const [draggedPort, setDraggedPort] = useState<[Port, Node] | null>(null)
     const dragOffset = useRef({ x: 0, y: 0 })
@@ -45,7 +46,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
         }
     }, [])
 
-    const fullLinks = useMemo(() => links.filter(item => !!item.dst), [links])
+    const fullLinks = links.filter(item => !!item.dst)
     const onLinkMouseDown = (event: React.MouseEvent, link: PortLink) => {
         setSelected(link)
     }
@@ -115,7 +116,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             y = Math.round(y / gridSnap) * gridSnap
             const node = createNodeFromId(draggedTypeId, x, y)
             if (node) {
-                setNodes([...nodes, node])
+                addNode(node)
             }
         }
     }
@@ -128,12 +129,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 }
             }
             node.destroy()
-
-            const index = nodes.indexOf(node)
-            if (index >= 0) {
-                nodes.splice(index, 1)
-                setNodes([...nodes])
-            }
+            removeNode(node)
         },
         [nodes],
     )
@@ -142,11 +138,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             if (link.dst) {
                 link.src[0].unlink(link.src[1], link.dst[0], link.dst[1])
             }
-            const index = links.indexOf(link)
-            if (index >= 0) {
-                links.splice(index, 1)
-                setLinks([...links])
-            }
+            removeLink(link)
         },
         [links],
     )
@@ -200,7 +192,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             }
             if (link) {
                 link.recomputePath()
-                setLinks([...links, link])
+                addLink(link)
             }
 
             setDraggedPort(null)
