@@ -1,6 +1,4 @@
 import React, { FC, useState } from 'react'
-import { Node, PortSize } from '../../../lib/node'
-import { Port } from '../../../lib/port'
 import { Point } from '../../../lib/common'
 import Path from 'svg-path-generator'
 import { PortLink } from '../../../lib/link'

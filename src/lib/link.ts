@@ -1,6 +1,6 @@
 import { offsetPoint, Point } from './common'
 import { Node, PortSize, PortSpacing } from './node'
-import { Port } from './port'
+import { Port } from './ports'
 
 export class PortLink {
     middlePoints: Point[] = []

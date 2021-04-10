@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react'
 import { Node } from '../../lib/node'
-import { Port, Side } from '../../lib/port'
+import { Port, Side } from '../../lib/ports'
 import { Link } from './Link/Link'
 import { PortLink } from '../../lib/link'
 
@@ -92,6 +92,7 @@ const PortDescription: FC<PortDescriptionProps> = ({ port, ox, oy }) => {
     let hAlign: string
     let vAlign: string
     switch (port.side) {
+        case Side.Virtual:
         case Side.Top:
             hAlign = 'middle'
             ox += PortSize / 2

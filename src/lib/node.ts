@@ -1,7 +1,7 @@
 import { ComponentClass, FunctionComponent, ReactElement, ReactNode } from 'react'
 import { Point } from './common'
 import { PortLink } from './link'
-import { Port, Side } from './port'
+import { Port, Side, BinaryPort, BusPort, LinkReason } from './ports'
 
 export const PortSize = 15
 export const PortSpacing = 5
@@ -52,6 +52,10 @@ export class Node {
                 y = this.y + PortSpacing + port.slot * (PortSize + PortSpacing)
                 x = this.x + this.width - PortSize / 2
                 break
+            case Side.Virtual:
+                x = this.x
+                y = this.y
+                break
         }
 
         if (center) {
@@ -60,6 +64,12 @@ export class Node {
         }
 
         return { x, y }
+    }
+
+    destroy() {
+        for (const port of this.ports) {
+            port.destroy()
+        }
     }
 
     link(sourcePort: string, destNode: Node, destPort: string): PortLink | null
@@ -81,16 +91,22 @@ export class Node {
         if (!sourcePortActual || !destPortActual) {
             return null
         }
-        if (!destPortActual.canConnectInbound(sourcePortActual)) {
-            return null
-        }
-        if (destPortActual.inputLink) {
+        if (sourcePortActual instanceof BinaryPort) {
+            if (destPortActual instanceof BinaryPort) {
+                const reason = sourcePortActual.linkTo(destPortActual)
+                if (reason != LinkReason.Success) {
+                    return null
+                }
+            } else {
+                return null
+            }
+        } else {
             return null
         }
 
         const link = new PortLink([this, sourcePortActual], [destNode, destPortActual])
-        destPortActual.inputLink = link
-        sourcePortActual.outputLinks.push(link)
+        sourcePortActual.links.push(link)
+        destPortActual.links.push(link)
         return link
     }
 
@@ -113,18 +129,35 @@ export class Node {
         if (!sourcePortActual || !destPortActual) {
             return false
         }
-        const link = destPortActual.inputLink
+        if (sourcePortActual instanceof BinaryPort) {
+            if (destPortActual instanceof BinaryPort) {
+                if (!sourcePortActual.unlinkTo(destPortActual)) {
+                    return false
+                }
+            } else {
+                return false
+            }
+        } else {
+            return false
+        }
+        const link = sourcePortActual.links.find(link => {
+            if (link.src[1] === sourcePortActual && link.dst && link.dst[1] === destPortActual) {
+                return true
+            } else {
+                return false
+            }
+        })
         if (!link) {
             return false
         }
-        if (link.src[0] != this || link.src[1] != sourcePortActual) {
-            return false
-        }
 
-        destPortActual.inputLink = null
-        const index = sourcePortActual.outputLinks.indexOf(link)
+        let index = sourcePortActual.links.indexOf(link)
         if (index >= 0) {
-            sourcePortActual.outputLinks.splice(index, 1)
+            sourcePortActual.links.splice(index, 1)
+        }
+        index = destPortActual.links.indexOf(link)
+        if (index >= 0) {
+            destPortActual.links.splice(index, 1)
         }
         return true
     }
@@ -141,11 +174,8 @@ export class Node {
 
     updateLinks() {
         for (const port of this.ports) {
-            for (const link of port.outputLinks) {
+            for (const link of port.links) {
                 link.recomputePath()
-            }
-            if (port.inputLink) {
-                port.inputLink.recomputePath()
             }
         }
     }

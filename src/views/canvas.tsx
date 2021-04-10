@@ -2,14 +2,13 @@ import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { VisualNode } from '../components/VisualNode'
 import { PortLink } from '../lib/link'
 import { Node } from '../lib/node'
-import { Port } from '../lib/port'
-import { TestNode } from '../lib/nodes/test'
 
 import './style.css'
 import { Link } from '../components/VisualNode/Link/Link'
 import { Point } from '../lib/common'
 import { useEditorState } from '../lib/editor'
 import { createNodeFromId } from '../lib/nodes'
+import { Port } from '../lib/ports'
 
 let currentMouseX: number
 let currentMouseY: number
@@ -124,13 +123,11 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const deleteNode = useCallback(
         (node: Node) => {
             for (const port of node.ports) {
-                if (port.inputLink) {
-                    deleteLink(port.inputLink)
-                }
-                for (const link of port.outputLinks) {
+                for (const link of port.links) {
                     deleteLink(link)
                 }
             }
+            node.destroy()
 
             const index = nodes.indexOf(node)
             if (index >= 0) {
@@ -190,6 +187,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     }
 
     const onPortLinkStart = (node: Node, port: Port) => {
+        // TODO: do we prevent dragging from a port which cannot have an output?
         setDraggedPort([port, node])
     }
 

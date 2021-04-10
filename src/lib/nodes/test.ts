@@ -1,5 +1,5 @@
 import { Node } from '../node'
-import { BiDiPort, InputPort, OutputPort, Side } from '../port'
+import { BiDiPort, InputPort, OutputPort, Side } from '../ports'
 import { MetaData } from './common'
 
 export class TestNode extends Node {

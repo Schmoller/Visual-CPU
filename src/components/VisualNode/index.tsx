@@ -3,7 +3,7 @@ import React, { FC, useCallback, useState } from 'react'
 import { Body, BodyProps } from './Body'
 import { NodePort } from './Port'
 import { Node } from '../../lib/node'
-import { Port } from '../../lib/port'
+import { Port } from '../../lib/ports'
 
 export interface VisualNodeProps {
     node: Node
