@@ -5,6 +5,9 @@
     "[typescriptreact]": {
         "editor.formatOnSave": true
     },
+    "[css]": {
+        "editor.formatOnSave": true
+    },
     "files.exclude": {
         "**/node_modules": true
     }

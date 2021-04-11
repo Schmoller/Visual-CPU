@@ -11,6 +11,7 @@
     "@types/node": "^12.20.4",
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.1",
+    "classnames": "^2.3.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "4.0.3",
@@ -47,6 +48,7 @@
     ]
   },
   "devDependencies": {
+    "@types/classnames": "^2.2.11",
     "concurrently": "^6.0.0",
     "electron": "^12.0.2",
     "electron-is-dev": "^2.0.0",

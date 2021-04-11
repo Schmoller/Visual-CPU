@@ -8,13 +8,26 @@ import { Link } from '../components/VisualNode/Link/Link'
 import { Point } from '../lib/common'
 import { useEditorState } from '../lib/editor'
 import { createNodeFromId } from '../lib/nodes'
-import { Port } from '../lib/ports'
+import { BinaryPort, BusPort, LinkReason, Port } from '../lib/ports'
 import { useStateArray } from '../lib/react_util'
+import { BusNodeLinkWindow, SourceLink } from '../windows/BusNodeLinkWindow/BusNodeLinkWindow'
+import { Bus } from '../lib/bus'
 
 let currentMouseX: number
 let currentMouseY: number
 
 type Selectable = PortLink | Node
+interface DraggedPort {
+    node: Node
+    port: Port
+    bus?: Bus
+}
+interface BusLinkState {
+    node: Node
+    port: BusPort
+    from?: DraggedPort
+    link?: PortLink
+}
 
 export interface CanvasProps {
     gridSnap?: number
@@ -27,7 +40,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [nodes, addNode, removeNode] = useStateArray<Node>()
     const [selected, setSelected] = useState<Selectable | null>(null)
     const [draggedNode, setDraggedNode] = useState<Node | null>(null)
-    const [draggedPort, setDraggedPort] = useState<[Port, Node] | null>(null)
+    const [draggedPort, setDraggedPort] = useState<DraggedPort | null>(null)
     const dragOffset = useRef({ x: 0, y: 0 })
     const panOffset = useRef({ x: 0, y: 0 })
     const cursorPanOffset = useRef({ x: 0, y: 0 })
@@ -37,6 +50,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const [zoom, setZoom] = useState(1)
     const [panX, setPanX] = useState(0)
     const [panY, setPanY] = useState(0)
+    const [showBusLink, setShowBusLink] = useState<BusLinkState | null>(null)
 
     const getCanvasRect = useCallback(() => {
         if (canvasDiv.current) {
@@ -180,19 +194,38 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
 
     const onPortLinkStart = (node: Node, port: Port) => {
         // TODO: do we prevent dragging from a port which cannot have an output?
-        setDraggedPort([port, node])
+        // If we also need to show the bus link window here if it click on a bus port
+        setDraggedPort({
+            node,
+            port,
+        })
     }
 
     const onPortMouseUp = (node: Node, port: Port, event: React.PointerEvent) => {
         if (draggedPort) {
-            const [srcPort, srcNode] = draggedPort
-            let link = srcNode.link(srcPort, node, port)
-            if (!link) {
-                link = node.link(port, srcNode, srcPort)
-            }
-            if (link) {
+            const { node: sourceNode, port: sourcePort } = draggedPort
+            if (port instanceof BusPort) {
+                const link = new PortLink([sourceNode, sourcePort], [node, port])
+                // create a visual link
                 link.recomputePath()
                 addLink(link)
+
+                // show the bus window
+                setShowBusLink({
+                    port,
+                    node,
+                    from: draggedPort,
+                    link,
+                })
+            } else {
+                let link = sourceNode.link(sourcePort, node, port)
+                if (!link) {
+                    link = node.link(port, sourceNode, sourcePort)
+                }
+                if (link) {
+                    link.recomputePath()
+                    addLink(link)
+                }
             }
 
             setDraggedPort(null)
@@ -241,6 +274,46 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
         />
     ))
 
+    const windows: React.ReactNode[] = []
+    if (showBusLink) {
+        const location = showBusLink.node.getPortLocation(showBusLink.port)
+        const initialX = (location.x - panX) / zoom
+        const initialY = (location.y - panY) / zoom
+        const onLinkComplete = () => {
+            const { port: sourcePort } = showBusLink.from!
+            sourcePort.links.push(showBusLink.link!)
+            showBusLink.port.links.push(showBusLink.link!)
+
+            setShowBusLink(null)
+        }
+        const onClose = () => {
+            if (showBusLink.link) {
+                removeLink(showBusLink.link)
+            }
+            setShowBusLink(null)
+        }
+
+        let linkFrom: SourceLink | undefined
+        if (showBusLink.from) {
+            linkFrom = {
+                port: showBusLink.from.port,
+                bus: showBusLink.from.bus,
+            }
+        }
+
+        windows.push(
+            <BusNodeLinkWindow
+                initialX={initialX}
+                initialY={initialY}
+                port={showBusLink.port}
+                key='bus'
+                onLinkComplete={onLinkComplete}
+                onClose={onClose}
+                linkFrom={linkFrom}
+            />,
+        )
+    }
+
     return (
         <div
             ref={canvasDiv}
@@ -270,6 +343,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                     {renderedLinks}
                 </g>
             </svg>
+            {windows}
         </div>
     )
 }

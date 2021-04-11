@@ -27,3 +27,14 @@
 .window-container {
     overflow: hidden;
 }
+
+/* utility classes for window content to use */
+.window-controls {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    align-items: center;
+}
+.window-controls > *:not(:first-child) {
+    margin-right: 0.4em;
+}

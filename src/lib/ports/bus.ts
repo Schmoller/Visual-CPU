@@ -8,12 +8,14 @@ interface BusMappingForPort {
     port: Port
     vPort: VirtualPort
 }
-
+type SubRange = [number, number]
 interface BusMappingForBus {
     type: 'bus'
     bit: number
 
     bus: Bus
+    offset: number
+    size: number
 }
 
 export type BusMapping = BusMappingForPort | BusMappingForBus
@@ -25,6 +27,29 @@ export function isPortMapping(mapping: BusMapping): mapping is BusMappingForPort
 export function isBusMapping(mapping: BusMapping): mapping is BusMappingForBus {
     return mapping.type === 'bus'
 }
+export function doesMappingOverlap(a: BusMapping, b: BusMapping): boolean {
+    let aStart: number = a.bit
+    let aEnd: number
+    let bStart: number = b.bit
+    let bEnd: number
+
+    if (isPortMapping(a)) {
+        aEnd = aStart + 1
+    } else {
+        aEnd = aStart + a.size
+    }
+    if (isPortMapping(b)) {
+        bEnd = bStart + 1
+    } else {
+        bEnd = bStart + b.size
+    }
+
+    if ((aStart <= bStart && aEnd > bStart) || (aStart <= bEnd && aEnd > bEnd)) {
+        return true
+    } else {
+        return false
+    }
+}
 
 export class BusPort extends Port<number> {
     mappings: BusMapping[] = []
@@ -33,8 +58,15 @@ export class BusPort extends Port<number> {
         super(name, side, slot)
     }
 
-    linkToBus(bus: Bus, offset: number = 0): boolean {
-        const endBit = offset + bus.size
+    linkToBus(bus: Bus, offset: number = 0, range?: SubRange): boolean {
+        let size: number
+        if (range) {
+            size = range[1] - range[0]
+        } else {
+            size = bus.size
+        }
+
+        const endBit = offset + size
 
         // check if bus is overlapping others
         for (const mapping of this.mappings) {
@@ -43,7 +75,7 @@ export class BusPort extends Port<number> {
                     return false
                 }
             } else if (isBusMapping(mapping)) {
-                const otherEnd = mapping.bit + mapping.bus.size
+                const otherEnd = mapping.bit + mapping.size
                 if ((offset <= mapping.bit && endBit > mapping.bit) || (offset <= otherEnd && endBit > otherEnd)) {
                     return false
                 }
@@ -53,7 +85,10 @@ export class BusPort extends Port<number> {
             type: 'bus',
             bit: offset,
             bus,
+            offset: range ? range[0] : 0,
+            size,
         })
+        this.sortMappings()
 
         return true
     }
@@ -65,7 +100,7 @@ export class BusPort extends Port<number> {
                     return LinkReason.Occupied
                 }
             } else if (isBusMapping(mapping)) {
-                if (bit >= mapping.bit && bit < mapping.bit + mapping.bus.size) {
+                if (bit >= mapping.bit && bit < mapping.bit + mapping.size) {
                     return LinkReason.Occupied
                 }
             }
@@ -88,6 +123,7 @@ export class BusPort extends Port<number> {
             port,
             vPort: localPort,
         })
+        this.sortMappings()
 
         return LinkReason.Success
     }
@@ -103,11 +139,27 @@ export class BusPort extends Port<number> {
                             port.unlinkTo(mapping.vPort)
                             mapping.vPort.unlinkTo(port)
                         }
+                        this.sortMappings()
 
                         return true
                     } else {
                         return false
                     }
+                }
+            }
+        }
+        return false
+    }
+
+    isBitOccupied(bit: number): boolean {
+        for (const mapping of this.mappings) {
+            if (isPortMapping(mapping)) {
+                if (bit == mapping.bit) {
+                    return true
+                }
+            } else if (isBusMapping(mapping)) {
+                if (bit >= mapping.bit && bit < mapping.bit + mapping.size) {
+                    return true
                 }
             }
         }
@@ -124,8 +176,14 @@ export class BusPort extends Port<number> {
                 }
             } else if (isBusMapping(mapping)) {
                 let maskedValue = value >> mapping.bit
-                maskedValue = maskedValue & ((1 << mapping.bus.size) - 1)
-                mapping.bus.value = maskedValue
+                maskedValue = maskedValue & ((1 << mapping.size) - 1)
+                if (mapping.offset > 0 || mapping.size !== mapping.bus.size) {
+                    maskedValue <<= mapping.offset
+                    const invertedMask = ~(((1 << mapping.size) - 1) << mapping.offset)
+                    mapping.bus.value = (mapping.bus.value & invertedMask) | maskedValue
+                } else {
+                    mapping.bus.value = maskedValue
+                }
             }
         }
     }
@@ -139,7 +197,14 @@ export class BusPort extends Port<number> {
                     value |= 1 << mapping.bit
                 }
             } else if (isBusMapping(mapping)) {
-                value |= (mapping.bus.value & ((1 << mapping.bus.size) - 1)) << mapping.bit
+                if (mapping.offset > 0 || mapping.size !== mapping.bus.size) {
+                    const mask = ((1 << mapping.size) - 1) << mapping.offset
+                    let incomingValue = mapping.bus.value & mask
+                    incomingValue >>= mapping.offset
+                    value |= incomingValue << mapping.bit
+                } else {
+                    value |= (mapping.bus.value & ((1 << mapping.bus.size) - 1)) << mapping.bit
+                }
             }
         }
         return value
@@ -161,6 +226,10 @@ export class BusPort extends Port<number> {
                 mapping.vPort.destroy()
             }
         }
+    }
+
+    private sortMappings(): void {
+        this.mappings.sort((a, b) => a.bit - b.bit)
     }
 }
 

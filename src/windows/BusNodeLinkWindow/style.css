@@ -1,0 +1,87 @@
+.bus-link-window > *:not(:first-child) {
+    margin-top: 0.25em;
+}
+
+.bit-display {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    font-size: 12px;
+    letter-spacing: 0;
+}
+.bit-display.linking {
+    cursor: cell;
+}
+.bit-display.linking:hover {
+    color: #288edf;
+}
+
+.bit-display > *:not(:first-child) {
+    margin-left: 0.4em;
+}
+
+/* Colour variants */
+.bit-display.edited .label {
+    color: #ec8326;
+}
+.bit-display.highlight .label {
+    color: #288edf;
+}
+
+.bit-display .bit {
+    width: 1em;
+    height: 1em;
+    display: flex;
+    align-items: stretch;
+
+    background-color: #595b5b;
+    box-shadow: inset 0 1px #737373;
+    border: 1px solid #333434;
+    color: #c6c8c8;
+}
+.bit-display .bit div {
+    margin: 0.25em;
+    flex-grow: 1;
+    background-color: #c6c8c8;
+}
+
+.bit-display .label {
+}
+.bit-display .link-to::before {
+    content: '-';
+    margin-right: 0.25em;
+}
+.bit-display .link-to:empty::before {
+    content: 'Not linked';
+    color: #757575;
+}
+.bit-group-display {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+
+    font-size: 12px;
+    letter-spacing: 0;
+}
+.bit-group-display > *:not(:first-child) {
+    margin-left: 0.4em;
+}
+.bit-group-display .group-divider {
+    width: 0.25em;
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+
+    border-right: 1px solid;
+    border-top: 1px solid;
+    border-bottom: 1px solid;
+}
+
+.bit-group-display .link-to {
+    align-self: stretch;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+.bit-group-display .link-to:empty::after {
+    content: 'Not linked';
+    color: #757575;
+}
