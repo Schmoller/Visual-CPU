@@ -14,8 +14,8 @@ export type ResizeDirection =
 export interface WindowFrameProps {
     x: number
     y: number
-    width: number
-    height: number
+    width: number | 'auto'
+    height: number | 'auto'
     title: React.ReactNode
 
     onStartResize?: (direction: ResizeDirection, event: React.MouseEvent) => void

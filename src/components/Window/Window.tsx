@@ -10,8 +10,8 @@ const DefaultMinHeight = 100
 export interface WindowProps {
     initialX: number
     initialY: number
-    initialWidth: number
-    initialHeight: number
+    initialWidth: number | 'auto'
+    initialHeight: number | 'auto'
     allowResize?: boolean
 
     title: React.ReactNode
@@ -37,8 +37,8 @@ export function Window({
 
     const [x, setX] = useState(initialX)
     const [y, setY] = useState(initialY)
-    const [width, setWidth] = useState(initialWidth)
-    const [height, setHeight] = useState(initialHeight)
+    const [width, setWidth] = useState<number | null>(initialWidth === 'auto' ? null : initialWidth)
+    const [height, setHeight] = useState<number | null>(initialHeight === 'auto' ? null : initialHeight)
 
     const mouseOffset = useRef({ x: 0, y: 0 })
     const mouseAction = useRef<ResizeOrMove | null>(null)
@@ -51,12 +51,34 @@ export function Window({
         document.addEventListener('mouseup', onMouseUp)
         document.addEventListener('mousemove', onMouseMove)
     }
-    const onStartResize = (direction: ResizeDirection, event: React.MouseEvent) => {
+    const onStartResize = (direction: ResizeDirection, event: React.MouseEvent<Element>) => {
+        let actualWidth, actualHeight
+
+        if (width === null || height === null) {
+            const rect = event.currentTarget.getBoundingClientRect()
+            if (width === null) {
+                actualWidth = rect.width
+                setWidth(actualWidth)
+            } else {
+                actualWidth = width
+            }
+
+            if (height === null) {
+                actualHeight = rect.height
+                setHeight(actualHeight)
+            } else {
+                actualHeight = height
+            }
+        } else {
+            actualWidth = width
+            actualHeight = height
+        }
+
         switch (direction) {
             case 'top':
             case 'top-left':
             case 'top-right':
-                mouseOffset.current.y = y + height
+                mouseOffset.current.y = y + actualHeight
                 break
             case 'bottom':
             case 'bottom-left':
@@ -68,7 +90,7 @@ export function Window({
             case 'left':
             case 'top-left':
             case 'bottom-left':
-                mouseOffset.current.x = x + width
+                mouseOffset.current.x = x + actualWidth
                 break
             case 'right':
             case 'top-right':
@@ -173,8 +195,8 @@ export function Window({
             <WindowFrame
                 x={x}
                 y={y}
-                width={width}
-                height={height}
+                width={width ?? 'auto'}
+                height={height ?? 'auto'}
                 title={title}
                 onHeaderMouseDown={onHeaderMouseDown}
                 onStartResize={allowResize ? onStartResize : undefined}
