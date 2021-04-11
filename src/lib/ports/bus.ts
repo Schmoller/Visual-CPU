@@ -5,7 +5,7 @@ interface BusMappingForPort {
     type: 'port'
     bit: number
 
-    port: Port
+    port: BinaryPort
     vPort: VirtualPort
 }
 type SubRange = [number, number]
@@ -164,6 +164,17 @@ export class BusPort extends Port<number> {
             }
         }
         return false
+    }
+
+    getConnectedPort(bit: number): BinaryPort | null {
+        for (const mapping of this.mappings) {
+            if (isPortMapping(mapping)) {
+                if (bit == mapping.bit) {
+                    return mapping.port
+                }
+            }
+        }
+        return null
     }
 
     assertValue(value: number) {

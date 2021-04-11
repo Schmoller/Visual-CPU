@@ -204,27 +204,37 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     const onPortMouseUp = (node: Node, port: Port, event: React.PointerEvent) => {
         if (draggedPort) {
             const { node: sourceNode, port: sourcePort } = draggedPort
-            if (port instanceof BusPort) {
-                const link = new PortLink([sourceNode, sourcePort], [node, port])
-                // create a visual link
-                link.recomputePath()
-                addLink(link)
-
-                // show the bus window
-                setShowBusLink({
-                    port,
-                    node,
-                    from: draggedPort,
-                    link,
-                })
-            } else {
-                let link = sourceNode.link(sourcePort, node, port)
-                if (!link) {
-                    link = node.link(port, sourceNode, sourcePort)
+            if (port === sourcePort) {
+                if (port instanceof BusPort) {
+                    // show window for editing
+                    setShowBusLink({
+                        port,
+                        node,
+                    })
                 }
-                if (link) {
+            } else {
+                if (port instanceof BusPort) {
+                    const link = new PortLink([sourceNode, sourcePort], [node, port])
+                    // create a visual link
                     link.recomputePath()
                     addLink(link)
+
+                    // show the bus window
+                    setShowBusLink({
+                        port,
+                        node,
+                        from: draggedPort,
+                        link,
+                    })
+                } else {
+                    let link = sourceNode.link(sourcePort, node, port)
+                    if (!link) {
+                        link = node.link(port, sourceNode, sourcePort)
+                    }
+                    if (link) {
+                        link.recomputePath()
+                        addLink(link)
+                    }
                 }
             }
 
@@ -276,9 +286,11 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
 
     const windows: React.ReactNode[] = []
     if (showBusLink) {
+        const canvasRect = getCanvasRect()
+
         const location = showBusLink.node.getPortLocation(showBusLink.port)
-        const initialX = (location.x - panX) / zoom
-        const initialY = (location.y - panY) / zoom
+        const initialX = (location.x + panX) * zoom + canvasRect.x
+        const initialY = (location.y + panY) * zoom + canvasRect.y
         const onLinkComplete = () => {
             const { port: sourcePort } = showBusLink.from!
             sourcePort.links.push(showBusLink.link!)
@@ -291,6 +303,20 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 removeLink(showBusLink.link)
             }
             setShowBusLink(null)
+        }
+        const onUnlink = (port: BinaryPort, bit: number) => {
+            if (showBusLink.port.unlinkToPort(port, bit)) {
+                for (const link of port.links) {
+                    if (link.src[1] === showBusLink.port || (link.dst && link.dst[1] === showBusLink.port)) {
+                        deleteLink(link)
+                        const index = port.links.indexOf(link)
+                        if (index >= 0) {
+                            port.links.splice(index, 1)
+                        }
+                        break
+                    }
+                }
+            }
         }
 
         let linkFrom: SourceLink | undefined
@@ -309,6 +335,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 key='bus'
                 onLinkComplete={onLinkComplete}
                 onClose={onClose}
+                onUnlink={onUnlink}
                 linkFrom={linkFrom}
             />,
         )

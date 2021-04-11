@@ -29,6 +29,7 @@ export interface BusNodeLinkWindowProps {
     onLinkComplete?: () => void
     onClose?: () => void
     onHighlightLink?: (link: PortLink | null) => void
+    onUnlink?: (port: BinaryPort, bit: number) => void
 
     linkFrom?: SourceLink
     initialX: number
@@ -41,6 +42,7 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
     initialY,
     linkFrom,
     onLinkComplete,
+    onUnlink,
     onClose,
     onHighlightLink,
 }) => {
@@ -108,6 +110,16 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
         }
     }, [placementRange, linkFrom, onLinkComplete])
 
+    const doUnlink = useCallback(
+        (bit: number) => {
+            const connected = port.getConnectedPort(bit)
+            if (connected && onUnlink) {
+                onUnlink(connected, bit)
+            }
+        },
+        [onUnlink],
+    )
+
     let nextBit = 0
     const bitDisplay = []
     let mappings: BusMapping[] = port.mappings
@@ -127,7 +139,7 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
             highlightMapping = {
                 type: 'port',
                 bit: placementRange[0],
-                port: linkFrom!.port!,
+                port: linkFrom!.port! as BinaryPort,
                 vPort: new VirtualPort(port, placementRange[0]),
             }
         }
@@ -179,6 +191,7 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
                     onClicked={onBitClick}
                     linkedTo={mapping.port.name}
                     variant={variant}
+                    onDelete={doUnlink}
                 />,
             )
             ++nextBit
@@ -198,6 +211,12 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
             <div className='window-controls'>
                 <Button text='Apply' variant='cta' onClick={completeLink} />
                 <Button text='Cancel' variant='quiet' onClick={onClose} />
+            </div>
+        )
+    } else {
+        controls = (
+            <div className='window-controls'>
+                <Button text='Close' onClick={onClose} />
             </div>
         )
     }

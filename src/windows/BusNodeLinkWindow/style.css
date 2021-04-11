@@ -15,6 +15,12 @@
 .bit-display.linking:hover {
     color: #288edf;
 }
+.bit-display.editing {
+    cursor: grabbing;
+}
+.bit-display.editing:hover {
+    color: #288edf;
+}
 
 .bit-display > *:not(:first-child) {
     margin-left: 0.4em;
@@ -33,6 +39,7 @@
     height: 1em;
     display: flex;
     align-items: stretch;
+    flex-shrink: 0;
 
     background-color: #595b5b;
     box-shadow: inset 0 1px #737373;
@@ -46,7 +53,16 @@
 }
 
 .bit-display .label {
+    flex-shrink: 0;
 }
+.bit-display .link-to {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
 .bit-display .link-to::before {
     content: '-';
     margin-right: 0.25em;
@@ -55,6 +71,25 @@
     content: 'Not linked';
     color: #757575;
 }
+
+.bit-display .remove {
+    flex-shrink: 0;
+    color: #ec8326;
+    width: 1em;
+    height: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    border: 1px solid rgba(51, 52, 52, 0.4);
+    cursor: initial;
+}
+.bit-display .remove:hover {
+    background-color: #626465;
+    box-shadow: inset 0 1px #737373;
+    border: 1px solid #333434;
+}
+
 .bit-group-display {
     display: flex;
     flex-direction: row;
