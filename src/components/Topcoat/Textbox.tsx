@@ -6,6 +6,7 @@ export interface TextboxProps {
     type?: 'text'
     large?: boolean
     disabled?: boolean
+    autoFocus?: boolean
     onBlur?: (event: React.FocusEvent) => void
     onFocus?: (event: React.FocusEvent) => void
     onKeyDown?: (event: React.KeyboardEvent) => void
@@ -20,6 +21,7 @@ export const Textbox: FC<TextboxProps> = ({
     type = 'text',
     large = false,
     disabled = false,
+    autoFocus,
     onBlur,
     onFocus,
     onKeyDown,
@@ -41,6 +43,7 @@ export const Textbox: FC<TextboxProps> = ({
             onChange={onValueChange}
             placeholder={placeholder}
             disabled={disabled}
+            autoFocus={autoFocus}
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             onFocus={onFocus}

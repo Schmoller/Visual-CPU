@@ -1,0 +1,30 @@
+.color-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    height: 100%;
+    width: 100%;
+
+    padding: 0.4em;
+
+    background-color: #454646;
+    border: 1px solid #333434;
+    border-radius: 4px;
+}
+
+.color-picker > *:not(:first-child) {
+    margin-top: 0.4em;
+}
+.color-picker .saturation {
+    flex-grow: 1;
+    position: relative;
+}
+.color-picker .hue {
+    height: 1em;
+    position: relative;
+}
+.color-picker-popover {
+    width: 10em;
+    height: 10em;
+}

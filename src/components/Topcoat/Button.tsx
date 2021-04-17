@@ -1,4 +1,4 @@
-import React, { FC, useContext, useState } from 'react'
+import React, { FC, useContext } from 'react'
 import { ButtonBarContext } from './ButtonBar'
 
 export interface ButtonProps {
@@ -36,7 +36,7 @@ export const Button: FC<ButtonProps> = ({ text, disabled, large, variant = 'norm
         }
 
         return (
-            <button className={classParts.join('--')} onClick={onClick}>
+            <button className={classParts.join('--')} onClick={onClick} disabled={disabled}>
                 {text}
             </button>
         )
