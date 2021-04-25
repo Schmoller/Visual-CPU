@@ -17,6 +17,7 @@ import { BitGroupDisplay } from './BitGroupDisplay'
 import { PortLink } from '../../lib/link'
 import { Bus } from '../../lib/bus'
 import { Button } from '../../components/Topcoat'
+import { BitSelector, Range } from './BitSelector'
 
 export interface SourceLink {
     port?: Port
@@ -144,94 +145,53 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
         },
         [onUnlink],
     )
+    const ranges: Range[] = port.mappings.map(mapping => {
+        if (isBusMapping(mapping)) {
+            return {
+                start: mapping.bit,
+                end: mapping.bit + mapping.bus.size,
+                name: mapping.bus.name,
+            }
+        } else if (isPortMapping(mapping)) {
+            return {
+                start: mapping.bit,
+                end: mapping.bit + 1,
+                name: mapping.port.name,
+            }
+        }
+        throw new Error('invalid mapping type')
+    })
 
-    let nextBit = 0
-    const bitDisplay = []
-    let mappings: BusMapping[] = port.mappings
-    let highlightMapping: BusMapping | null = null
+    let highlightRange: Range | null = null
     if (placementRange) {
-        mappings = [...mappings]
-        const size = placementRange[1] - placementRange[0]
-        const linkBus = linkFrom ? linkFrom.bus : linkTo!.bus
-        const linkPort = linkFrom ? linkFrom.port : linkTo!.port
-
-        if (size > 1) {
-            highlightMapping = {
-                type: 'bus',
-                bit: placementRange[0],
-                size,
-                bus: linkBus!,
-                offset: 0,
+        let name: string
+        if (linkFrom) {
+            if (linkFrom.bus) {
+                name = linkFrom.bus.name
+            } else if (linkFrom.port) {
+                name = linkFrom.port.name
+            } else {
+                name = ''
+            }
+        } else if (linkTo) {
+            if (linkTo.bus) {
+                name = linkTo.bus.name
+            } else if (linkTo.port) {
+                name = linkTo.port.name
+            } else {
+                name = ''
             }
         } else {
-            highlightMapping = {
-                type: 'port',
-                bit: placementRange[0],
-                port: linkPort as BinaryPort,
-                vPort: new VirtualPort(port, placementRange[0]),
-            }
+            name = ''
         }
 
-        // insert our placement range as a mapping
-        // and move anything that is in the way
-        for (const mapping of mappings) {
-            if (doesMappingOverlap(mapping, highlightMapping)) {
-                console.log('highlight overlap')
-                // TODO: what the comment above says
-            }
+        highlightRange = {
+            start: placementRange[0],
+            end: placementRange[1],
+            name,
         }
-        mappings.push(highlightMapping)
-        mappings.sort((a, b) => a.bit - b.bit)
     }
 
-    for (const mapping of mappings) {
-        let variant: 'normal' | 'highlight' | 'edited' = 'normal'
-        if (highlightMapping === mapping) {
-            if (linkFrom || linkTo) {
-                variant = 'edited'
-            } else {
-                variant = 'highlight'
-            }
-        }
-        for (; nextBit < mapping.bit; ++nextBit) {
-            // Add an empty bit display
-            bitDisplay.push(
-                <BitDisplay bit={nextBit} key={nextBit} linking={!!linkFrom || !!linkTo} onClicked={onBitClick} />,
-            )
-        }
-        // Add bit display for mapping
-        if (isBusMapping(mapping)) {
-            bitDisplay.push(
-                <BitGroupDisplay
-                    bit={nextBit}
-                    size={mapping.bus.size}
-                    key={nextBit}
-                    linking={!!linkFrom || !!linkTo}
-                    variant={variant}
-                    onClicked={onBitClick}
-                />,
-            )
-            nextBit += mapping.bus.size
-        } else if (isPortMapping(mapping)) {
-            bitDisplay.push(
-                <BitDisplay
-                    bit={nextBit}
-                    key={nextBit}
-                    linking={!!linkFrom || !!linkTo}
-                    onClicked={onBitClick}
-                    linkedTo={mapping.port.name}
-                    variant={variant}
-                    onDelete={doUnlink}
-                />,
-            )
-            ++nextBit
-        }
-    }
-    for (; nextBit < port.bitSize; ++nextBit) {
-        bitDisplay.push(
-            <BitDisplay bit={nextBit} key={nextBit} linking={!!linkFrom || !!linkTo} onClicked={onBitClick} />,
-        )
-    }
     let title = port.name
     if (linkFrom) {
         title += ' (Link)'
@@ -258,7 +218,14 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
     return (
         <Window title={title} initialX={initialX} initialY={initialY} initialWidth={150} initialHeight={'auto'}>
             <div className='bus-link-window'>
-                {bitDisplay}
+                <BitSelector
+                    bits={port.bitSize}
+                    isLinking={!!linkFrom || !!linkTo}
+                    ranges={ranges}
+                    highlight={highlightRange}
+                    onBitClick={onBitClick}
+                    onBitUnlink={doUnlink}
+                />
                 {controls}
             </div>
         </Window>
