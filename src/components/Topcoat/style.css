@@ -28,3 +28,27 @@
     width: 10em;
     height: 10em;
 }
+
+.drop-down {
+    position: absolute;
+    background-color: #4b4d4e;
+    font-size: 14px;
+    border: 1px solid #333434;
+    box-shadow: inset 0 1px #737373;
+}
+.drop-down-menu-item {
+    text-shadow: 0 -1px rgb(0 0 0 / 69%);
+    color: #c6c8c8;
+    padding-left: 0.4em;
+    padding-right: 0.4em;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+    border: 1px solid transparent;
+}
+.drop-down-menu-item:hover {
+    background-color: #626465;
+}
+.drop-down-menu-item:active {
+    border: 1px solid #333434;
+    background-color: #3f4041;
+}
