@@ -89,6 +89,7 @@ export class BusPort extends Port<number> {
             size,
         })
         this.sortMappings()
+        this.emit('change')
 
         return true
     }
@@ -124,6 +125,7 @@ export class BusPort extends Port<number> {
             vPort: localPort,
         })
         this.sortMappings()
+        this.emit('change')
 
         return LinkReason.Success
     }
@@ -140,6 +142,27 @@ export class BusPort extends Port<number> {
                             mapping.vPort.unlinkTo(port)
                         }
                         this.sortMappings()
+                        this.emit('change')
+
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    unlinkToBus(bus: Bus, bit: number): boolean {
+        for (const mapping of this.mappings) {
+            if (isBusMapping(mapping)) {
+                if (mapping.bus === bus && mapping.bit === bit) {
+                    const index = this.mappings.indexOf(mapping)
+                    if (index >= 0) {
+                        this.mappings.splice(index, 1)
+                        this.sortMappings()
+                        this.emit('change')
 
                         return true
                     } else {
@@ -171,6 +194,17 @@ export class BusPort extends Port<number> {
             if (isPortMapping(mapping)) {
                 if (bit == mapping.bit) {
                     return mapping.port
+                }
+            }
+        }
+        return null
+    }
+
+    getConnectedBus(bit: number): Bus | null {
+        for (const mapping of this.mappings) {
+            if (isBusMapping(mapping)) {
+                if (bit == mapping.bit) {
+                    return mapping.bus
                 }
             }
         }

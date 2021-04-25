@@ -1,23 +1,14 @@
-import React, { FC, useCallback, useState } from 'react'
-import {
-    BinaryPort,
-    BusPort,
-    isBusMapping,
-    isPortMapping,
-    LinkReason,
-    Port,
-    BusMapping,
-    VirtualPort,
-    doesMappingOverlap,
-} from '../../lib/ports'
+import React, { FC, useCallback, useMemo, useState } from 'react'
+import { BinaryPort, BusPort, isBusMapping, isPortMapping, LinkReason, Port } from '../../lib/ports'
 import { Window } from '../../components/Window/Window'
-import { BitDisplay } from './BitDisplay'
 import './style.css'
-import { BitGroupDisplay } from './BitGroupDisplay'
 import { PortLink } from '../../lib/link'
 import { Bus } from '../../lib/bus'
-import { Button } from '../../components/Topcoat'
+import { Button, DropdownButton, MenuItem } from '../../components/Topcoat'
 import { BitSelector, Range } from './BitSelector'
+import { useActiveWorksheet } from '../../lib/worksheet'
+import { useObservableArray } from '../../lib/observable'
+import { useUpdateOnChange } from '../../lib/react_util'
 
 export interface SourceLink {
     port?: Port
@@ -49,8 +40,21 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
     onClose,
     onHighlightLink,
 }) => {
-    const [placementRange, setPlacementRange] = useState<[number, number] | null>(null)
+    useUpdateOnChange(port)
 
+    const worksheet = useActiveWorksheet()
+    const allBuses = useObservableArray(worksheet.definedBuses)
+
+    const [placementRange, setPlacementRange] = useState<[number, number] | null>(null)
+    const [sourceBusOffset, setSourceBusOffset] = useState<number>(0)
+
+    const [selectedBusId, setSelectedBusId] = useState<string | null>(null)
+
+    const selectedBus = useMemo(() => {
+        return allBuses.find(bus => bus.name === selectedBusId)
+    }, [selectedBusId, allBuses])
+
+    const isLinking = !!linkFrom || !!linkTo || !!selectedBus
     const onBitClick = useCallback(
         (bit: number) => {
             if (linkFrom) {
@@ -95,56 +99,156 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
                     }
                 }
                 setPlacementRange([start, end])
+            } else if (selectedBus) {
+                if (!placementRange) {
+                    return
+                }
+
+                let size = placementRange[1] - placementRange[0]
+                if (bit + size > port.bitSize) {
+                    size = port.bitSize - bit
+                }
+                if (sourceBusOffset + size > selectedBus.size) {
+                    size = selectedBus.size - sourceBusOffset
+                }
+
+                setPlacementRange([bit, bit + size])
             }
         },
-        [linkFrom],
+        [linkFrom, linkTo, selectedBus, placementRange, port, sourceBusOffset],
     )
+    const onBusBitClick = useCallback(
+        (bit: number) => {
+            if (!selectedBus || !placementRange) {
+                return
+            }
+            setSourceBusOffset(bit)
+
+            let size = placementRange[1] - placementRange[0]
+            if (bit + size > selectedBus.size) {
+                size = selectedBus.size - bit
+            }
+
+            const placementStart = placementRange[0]
+            setPlacementRange([placementStart, placementStart + size])
+        },
+        [selectedBus, placementRange],
+    )
+
+    const onSelectPortRange = useCallback(
+        (start: number, end: number) => {
+            if (!selectedBus) {
+                return
+            }
+
+            setPlacementRange([start, end])
+            const size = end - start
+            if (sourceBusOffset + size > selectedBus.size) {
+                setSourceBusOffset(selectedBus.size - size)
+            }
+        },
+        [selectedBus],
+    )
+
+    const onSelectBusRange = useCallback(
+        (start: number, end: number) => {
+            if (!selectedBus || !placementRange) {
+                return
+            }
+
+            const size = end - start
+            let placementStart = placementRange[0]
+            if (placementStart + size > port.bitSize) {
+                placementStart = port.bitSize - size
+            }
+
+            const placementEnd = Math.min(placementStart + size, port.bitSize)
+
+            setPlacementRange([placementStart, placementEnd])
+            setSourceBusOffset(start)
+        },
+        [selectedBus, placementRange, port],
+    )
+
     const completeLink = useCallback(() => {
         if (!placementRange) {
             return
         }
         const [start, end] = placementRange
         const link = linkFrom ? linkFrom : linkTo
-        if (!link) {
-            return
-        }
-
-        if (link.bus) {
-            if (link.subRange) {
-                if (port.linkToBus(link.bus, start, link.subRange)) {
-                    if (onLinkComplete) {
-                        onLinkComplete()
+        if (link) {
+            if (link.bus) {
+                if (link.subRange) {
+                    if (port.linkToBus(link.bus, start, link.subRange)) {
+                        if (onLinkComplete) {
+                            onLinkComplete()
+                        }
+                    } else {
                     }
                 } else {
+                    if (port.linkToBus(link.bus, start)) {
+                        if (onLinkComplete) {
+                            onLinkComplete()
+                        }
+                    } else {
+                    }
                 }
             } else {
-                if (port.linkToBus(link.bus, start)) {
+                const reason = port.linkToPort(link.port as BinaryPort, start)
+                if (reason === LinkReason.Success) {
                     if (onLinkComplete) {
                         onLinkComplete()
                     }
                 } else {
                 }
             }
-        } else {
-            const reason = port.linkToPort(link.port as BinaryPort, start)
-            if (reason === LinkReason.Success) {
+        } else if (selectedBus) {
+            const size = end - start
+            if (port.linkToBus(selectedBus, start, [sourceBusOffset, sourceBusOffset + size])) {
                 if (onLinkComplete) {
                     onLinkComplete()
                 }
-            } else {
             }
         }
-    }, [placementRange, linkFrom, linkTo, onLinkComplete])
+    }, [placementRange, linkFrom, linkTo, onLinkComplete, selectedBus, sourceBusOffset])
 
     const doUnlink = useCallback(
         (bit: number) => {
-            const connected = port.getConnectedPort(bit)
-            if (connected && onUnlink) {
-                onUnlink(connected, bit)
+            const connectedPort = port.getConnectedPort(bit)
+            if (connectedPort) {
+                if (onUnlink) {
+                    onUnlink(connectedPort, bit)
+                }
+            }
+            const connectedBus = port.getConnectedBus(bit)
+            if (connectedBus) {
+                port.unlinkToBus(connectedBus, bit)
             }
         },
         [onUnlink],
     )
+
+    const doSelectBus = useCallback((busId: string) => {
+        setSelectedBusId(busId)
+        const bus = allBuses.find(bus => bus.name === busId)
+        let updated = false
+
+        if (bus) {
+            setSourceBusOffset(0)
+
+            if (bus.size >= port.bitSize) {
+                setPlacementRange([0, port.bitSize])
+                updated = true
+            } else {
+                setPlacementRange([0, bus.size])
+                updated = true
+            }
+        }
+        if (!updated) {
+            setPlacementRange(null)
+        }
+    }, [])
+
     const ranges: Range[] = port.mappings.map(mapping => {
         if (isBusMapping(mapping)) {
             return {
@@ -192,40 +296,79 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
         }
     }
 
+    let busRange: Range | null = null
+    if (selectedBus && placementRange) {
+        const size = placementRange[1] - placementRange[0]
+        busRange = {
+            start: sourceBusOffset,
+            end: sourceBusOffset + size,
+        }
+    }
+
     let title = port.name
     if (linkFrom) {
         title += ' (Link)'
     } else if (linkTo) {
         title += ' (Source)'
+    } else if (selectedBus) {
+        title += ' (Link to bus)'
     }
 
     let controls: React.ReactNode
-    if (linkFrom || linkTo) {
-        controls = (
-            <div className='window-controls'>
-                <Button text='Apply' variant='cta' onClick={completeLink} />
-                <Button text='Cancel' variant='quiet' onClick={onClose} />
-            </div>
-        )
-    } else {
-        controls = (
-            <div className='window-controls'>
-                <Button text='Close' onClick={onClose} />
-            </div>
-        )
+    const applyEnabled = placementRange
+    controls = (
+        <div className='window-controls'>
+            <Button text='Apply' variant='cta' onClick={completeLink} disabled={!applyEnabled} />
+            <Button text='Cancel' variant='quiet' onClick={onClose} />
+        </div>
+    )
+    const linkMenuItems = useMemo(() => {
+        const items: MenuItem[] = []
+        for (const bus of allBuses) {
+            items.push({
+                id: bus.name,
+                value: `${bus.name} (${bus.size} bits)`,
+            })
+        }
+        return items
+    }, [allBuses])
+
+    let headerControls: React.ReactNode
+    if (!linkFrom && !linkTo) {
+        headerControls = <DropdownButton value='Link' items={linkMenuItems} onSelect={doSelectBus} />
     }
 
     return (
-        <Window title={title} initialX={initialX} initialY={initialY} initialWidth={150} initialHeight={'auto'}>
+        <Window title={title} initialX={initialX} initialY={initialY} initialWidth={'auto'} initialHeight={'auto'}>
             <div className='bus-link-window'>
-                <BitSelector
-                    bits={port.bitSize}
-                    isLinking={!!linkFrom || !!linkTo}
-                    ranges={ranges}
-                    highlight={highlightRange}
-                    onBitClick={onBitClick}
-                    onBitUnlink={doUnlink}
-                />
+                {headerControls}
+
+                <div className='bus-link-multiple'>
+                    <BitSelector
+                        bits={port.bitSize}
+                        isLinking={isLinking}
+                        ranges={ranges}
+                        highlight={highlightRange}
+                        onBitClick={onBitClick}
+                        onBitUnlink={doUnlink}
+                        canSelectRange={!!selectedBus}
+                        maxSelectedRange={selectedBus ? selectedBus.size : 0}
+                        onSelectRange={onSelectPortRange}
+                    />
+                    {selectedBus && (
+                        <BitSelector
+                            bits={selectedBus.size}
+                            isLinking
+                            ranges={[]}
+                            hideLinked
+                            highlight={busRange}
+                            canSelectRange
+                            maxSelectedRange={port.bitSize}
+                            onSelectRange={onSelectBusRange}
+                            onBitClick={onBusBitClick}
+                        />
+                    )}
+                </div>
                 {controls}
             </div>
         </Window>

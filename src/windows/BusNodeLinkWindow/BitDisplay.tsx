@@ -1,20 +1,23 @@
-import React, { FC, useCallback } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import './style.css'
 import classNames from 'classnames'
-import { Button } from '../../components/Topcoat'
 
+export type BitDisplayVariant = 'normal' | 'edited' | 'highlight'
 export interface BitDisplayProps {
     bit: number
 
     linkedTo?: string
     hideLinked?: boolean
-    variant?: 'normal' | 'edited' | 'highlight'
+    variant?: BitDisplayVariant
 
     linking?: boolean
 
     onClicked?: (bit: number, event: React.MouseEvent) => void
     onDelete?: (bit: number) => void
-    onDragStart?: (bit: number, event: React.DragEvent) => void
+    onMouseDown?: (bit: number, event: React.MouseEvent) => void
+    onMouseUp?: (bit: number, event: React.MouseEvent) => void
+    onMouseEnter?: (bit: number, event: React.MouseEvent) => void
+    onMouseLeave?: (bit: number, event: React.MouseEvent) => void
 }
 
 export const BitDisplay: FC<BitDisplayProps> = ({
@@ -24,23 +27,46 @@ export const BitDisplay: FC<BitDisplayProps> = ({
     linking,
     onClicked,
     onDelete,
-    onDragStart,
+    onMouseDown,
+    onMouseUp,
+    onMouseEnter,
+    onMouseLeave,
     hideLinked,
 }) => {
-    const doDragStart = useCallback(
-        (event: React.DragEvent) => {
-            if (onDragStart) {
-                onDragStart(bit, event)
+    const doMouseDown = useMemo(() => {
+        if (onMouseDown) {
+            return (event: React.MouseEvent) => {
+                onMouseDown(bit, event)
             }
-        },
-        [bit, onDragStart],
-    )
+        }
+    }, [bit, onMouseDown])
+    const doMouseUp = useMemo(() => {
+        if (onMouseUp) {
+            return (event: React.MouseEvent) => {
+                onMouseUp(bit, event)
+            }
+        }
+    }, [bit, onMouseUp])
+    const doMouseEnter = useMemo(() => {
+        if (onMouseEnter) {
+            return (event: React.MouseEvent) => {
+                onMouseEnter(bit, event)
+            }
+        }
+    }, [bit, onMouseEnter])
+    const doMouseLeave = useMemo(() => {
+        if (onMouseLeave) {
+            return (event: React.MouseEvent) => {
+                onMouseLeave(bit, event)
+            }
+        }
+    }, [bit, onMouseLeave])
+
     const doDelete = useCallback(() => {
         if (onDelete) {
             onDelete(bit)
         }
     }, [onDelete])
-
     return (
         <div
             onClick={event => {
@@ -49,8 +75,10 @@ export const BitDisplay: FC<BitDisplayProps> = ({
                 }
             }}
             className={classNames('bit-display', { linking: linking, editing: !linking && linkedTo }, variant)}
-            draggable={!!onDragStart && !linking && !!linkedTo}
-            onDragStart={doDragStart}
+            onMouseDown={doMouseDown}
+            onMouseUp={doMouseUp}
+            onMouseEnter={doMouseEnter}
+            onMouseLeave={doMouseLeave}
         >
             <div className='bit'>{linkedTo && <div></div>}</div>
             <div className='label'>Bit {bit}</div>
