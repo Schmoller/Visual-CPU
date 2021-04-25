@@ -9,12 +9,17 @@ export interface ButtonProps {
     onClick?: (event: React.MouseEvent) => void
 }
 export const Button: FC<ButtonProps> = ({ text, disabled, large, variant = 'normal', onClick }) => {
-    const isInButtonBar = useContext<boolean>(ButtonBarContext)
+    const { isButtonBar, isLarge } = useContext(ButtonBarContext)
 
-    if (isInButtonBar) {
+    if (isButtonBar) {
+        const classParts = ['topcoat-button-bar__button']
+        if (isLarge) {
+            classParts.push('large')
+        }
+
         return (
             <div className='topcoat-button-bar__item'>
-                <button className='topcoat-button-bar__button' onClick={onClick}>
+                <button className={classParts.join('--')} onClick={onClick}>
                     {text}
                 </button>
             </div>
