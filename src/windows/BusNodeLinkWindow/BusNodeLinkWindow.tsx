@@ -48,8 +48,6 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
     onClose,
     onHighlightLink,
 }) => {
-    // TODO: allow the height to be automatically determined
-    const height = port.bitSize * 21
     const [placementRange, setPlacementRange] = useState<[number, number] | null>(null)
 
     const onBitClick = useCallback(
