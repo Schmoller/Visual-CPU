@@ -25,6 +25,7 @@ interface DraggedPort {
 interface BusLinkState {
     node: Node
     port: BusPort
+    to?: DraggedPort
     from?: DraggedPort
     link?: PortLink
 }
@@ -193,8 +194,12 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
     }
 
     const onPortLinkStart = (node: Node, port: Port) => {
-        // TODO: do we prevent dragging from a port which cannot have an output?
-        // If we also need to show the bus link window here if it click on a bus port
+        if (port instanceof BinaryPort) {
+            if (!port.canOutput()) {
+                return
+            }
+        }
+
         setDraggedPort({
             node,
             port,
@@ -227,13 +232,28 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                         link,
                     })
                 } else {
-                    let link = sourceNode.link(sourcePort, node, port)
-                    if (!link) {
-                        link = node.link(port, sourceNode, sourcePort)
-                    }
-                    if (link) {
+                    if (sourcePort instanceof BusPort) {
+                        const link = new PortLink([sourceNode, sourcePort], [node, port])
+                        // create a visual link
                         link.recomputePath()
                         addLink(link)
+
+                        // show window to select the source bit
+                        setShowBusLink({
+                            node: sourceNode,
+                            port: sourcePort,
+                            to: { node, port },
+                            link,
+                        })
+                    } else {
+                        let link = sourceNode.link(sourcePort, node, port)
+                        if (!link) {
+                            link = node.link(port, sourceNode, sourcePort)
+                        }
+                        if (link) {
+                            link.recomputePath()
+                            addLink(link)
+                        }
                     }
                 }
             }
@@ -292,10 +312,16 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
         const initialX = (location.x + panX) * zoom + canvasRect.x
         const initialY = (location.y + panY) * zoom + canvasRect.y
         const onLinkComplete = () => {
-            const { port: sourcePort } = showBusLink.from!
-            sourcePort.links.push(showBusLink.link!)
-            showBusLink.port.links.push(showBusLink.link!)
+            if (showBusLink.from) {
+                const { port: sourcePort } = showBusLink.from
+                sourcePort.links.push(showBusLink.link!)
+                showBusLink.port.links.push(showBusLink.link!)
+            } else if (showBusLink.to) {
+                const { port: destPort } = showBusLink.to
 
+                showBusLink.port.links.push(showBusLink.link!)
+                destPort.links.push(showBusLink.link!)
+            }
             setShowBusLink(null)
         }
         const onClose = () => {
@@ -326,6 +352,13 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 bus: showBusLink.from.bus,
             }
         }
+        let linkTo: SourceLink | undefined
+        if (showBusLink.to) {
+            linkTo = {
+                port: showBusLink.to.port,
+                bus: showBusLink.to.bus,
+            }
+        }
 
         windows.push(
             <BusNodeLinkWindow
@@ -337,6 +370,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 onClose={onClose}
                 onUnlink={onUnlink}
                 linkFrom={linkFrom}
+                linkTo={linkTo}
             />,
         )
     }
