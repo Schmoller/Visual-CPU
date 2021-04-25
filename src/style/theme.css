@@ -2,8 +2,27 @@
     background-color: rgb(241, 241, 241);
 }
 
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.table th,
+td {
+    text-align: start;
+}
+.table th:not(:first-child),
+td:not(:first-child) {
+    padding-left: 0.4em;
+}
+.table thead tr:last-child th {
+    border-bottom: 1px solid #333434;
+}
+.table tbody tr:first-child td {
+    padding-top: 0.4em;
+}
+
 /* clear some defaults */
 * {
     user-select: none;
 }
-
