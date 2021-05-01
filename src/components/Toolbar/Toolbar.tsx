@@ -9,7 +9,7 @@ export interface ToolbarProps {
 }
 export const Toolbar: FC<ToolbarProps> = ({ onNewClick, onBusesClick }) => {
     const clock = useClock()
-    const isClockRunning = useObservableValue(clock.isRunning)
+    const [isClockRunning] = useObservableValue(clock.isRunning)
 
     const doClockStop = useCallback(() => {
         clock.stop()

@@ -179,4 +179,8 @@ export class Node {
             }
         }
     }
+
+    onClockBegin(): void {}
+
+    onClockEnd(): void {}
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useForceUpdate } from '../react_util'
 import { ObservableArray } from './array'
 import { ObservableValue } from './value'
 
@@ -19,12 +20,7 @@ export function useObservableArray<T>(value: ObservableArray<T>): T[] {
     return mirror
 }
 export function useObservableValue<T>(value: ObservableValue<T>): [T, React.Dispatch<T>] {
-    const [, setForceUpdate] = useState<boolean>(false)
-
-    const onUpdate = useCallback(() => {
-        setForceUpdate(value => !value)
-    }, [])
-
+    const forceUpdate = useForceUpdate()
     const setValue = useCallback(
         (newValue: T) => {
             value.set(newValue)
@@ -33,11 +29,11 @@ export function useObservableValue<T>(value: ObservableValue<T>): [T, React.Disp
     )
 
     useEffect(() => {
-        value.addObserver(onUpdate)
+        value.addObserver(forceUpdate)
         return () => {
-            value.removeObserver(onUpdate)
+            value.removeObserver(forceUpdate)
         }
-    }, [value, onUpdate])
+    }, [value, forceUpdate])
 
     return [value.get(), setValue]
 }

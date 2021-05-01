@@ -253,7 +253,7 @@ export const BusNodeLinkWindow: FC<BusNodeLinkWindowProps> = ({
         if (isBusMapping(mapping)) {
             return {
                 start: mapping.bit,
-                end: mapping.bit + mapping.bus.size,
+                end: mapping.bit + mapping.size,
                 name: mapping.bus.name,
             }
         } else if (isPortMapping(mapping)) {

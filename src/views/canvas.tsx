@@ -12,6 +12,8 @@ import { BinaryPort, BusPort, LinkReason, Port } from '../lib/ports'
 import { useStateArray } from '../lib/react_util'
 import { BusNodeLinkWindow, SourceLink } from '../windows/BusNodeLinkWindow/BusNodeLinkWindow'
 import { Bus } from '../lib/bus'
+import { useObservableArray } from '../lib/observable'
+import { useActiveWorksheet } from '../lib/worksheet'
 
 let currentMouseX: number
 let currentMouseY: number
@@ -35,10 +37,13 @@ export interface CanvasProps {
 }
 
 export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
+    const worksheet = useActiveWorksheet()
+
     const editorState = useEditorState()
     const canvasDiv = useRef<HTMLDivElement>(null)
     const [links, addLink, removeLink] = useStateArray<PortLink>()
-    const [nodes, addNode, removeNode] = useStateArray<Node>()
+    const nodes = useObservableArray(worksheet.nodes)
+
     const [selected, setSelected] = useState<Selectable | null>(null)
     const [draggedNode, setDraggedNode] = useState<Node | null>(null)
     const [draggedPort, setDraggedPort] = useState<DraggedPort | null>(null)
@@ -131,7 +136,7 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
             y = Math.round(y / gridSnap) * gridSnap
             const node = createNodeFromId(draggedTypeId, x, y)
             if (node) {
-                addNode(node)
+                worksheet.nodes.push(node)
             }
         }
     }
@@ -144,7 +149,10 @@ export const Canvas: FC<CanvasProps> = ({ gridSnap = 30 }) => {
                 }
             }
             node.destroy()
-            removeNode(node)
+            const index = worksheet.nodes.indexOf(node)
+            if (index >= 0) {
+                worksheet.nodes.splice(index, 1)
+            }
         },
         [nodes],
     )
